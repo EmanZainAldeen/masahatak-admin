@@ -11,17 +11,18 @@ const authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Verify user is admin
-    const adminDoc = await db.collection('admins').doc(decoded.userId).get();
+    // Verify user is admin from users collection
+    const userDoc = await db.collection('users').doc(decoded.userId).get();
+    const role = (userDoc.data()?.role || '').toLowerCase();
 
-    if (!adminDoc.exists) {
+    if (!userDoc.exists || (role !== 'admin' && role !== 'super_admin')) {
       return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
     }
 
     req.admin = {
       id: decoded.userId,
-      email: adminDoc.data().email,
-      role: adminDoc.data().role
+      email: userDoc.data().email,
+      role: userDoc.data().role,
     };
 
     next();

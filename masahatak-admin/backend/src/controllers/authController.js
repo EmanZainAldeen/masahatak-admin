@@ -1,33 +1,49 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { db } = require('../config/firebase');
+const { db, admin } = require('../config/firebase');
 
-// Admin login
+// Firebase Web API key (for REST auth)
+const FIREBASE_API_KEY = 'AIzaSyAAtRYqL1K7U2rOgZIl5Jkm6D1TCrjZIcA';
+
+// Helper: sign in via Firebase Auth REST API
+async function firebaseSignIn(email, password) {
+  const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error?.message || 'Invalid credentials');
+  return data; // { localId, email, idToken, ... }
+}
+
+// Admin login — يتحقق عبر Firebase Auth ثم يتأكد أن الدور admin
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find admin by email
-    const adminsRef = db.collection('admins');
-    const snapshot = await adminsRef.where('email', '==', email).get();
-
-    if (snapshot.empty) {
+    // 1. تحقق من كلمة المرور عبر Firebase Auth
+    let firebaseUser;
+    try {
+      firebaseUser = await firebaseSignIn(email, password);
+    } catch {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const adminDoc = snapshot.docs[0];
-    const adminData = adminDoc.data();
+    const uid = firebaseUser.localId;
 
-    // Verify password
-    const isMatch = await bcrypt.compare(password, adminData.password);
+    // 2. تحقق أن المستخدم أدمن من users collection
+    const userDoc = await db.collection('users').doc(uid).get();
+    const userData = userDoc.exists ? userDoc.data() : {};
+    const role = (userData.role || '').toLowerCase();
 
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (role !== 'admin' && role !== 'super_admin') {
+      return res.status(403).json({ error: 'Access denied. Admin only.' });
     }
 
-    // Generate JWT token
+    // 3. أنشئ JWT token
     const token = jwt.sign(
-      { userId: adminDoc.id, email: adminData.email },
+      { userId: uid, email },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -36,11 +52,11 @@ exports.login = async (req, res) => {
       success: true,
       token,
       admin: {
-        id: adminDoc.id,
-        email: adminData.email,
-        fullName: adminData.fullName,
-        role: adminData.role
-      }
+        id: uid,
+        email,
+        fullName: userData.fullName || userData.full_name || 'Admin',
+        role: userData.role,
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -51,21 +67,23 @@ exports.login = async (req, res) => {
 // Get current admin profile
 exports.getProfile = async (req, res) => {
   try {
-    const adminDoc = await db.collection('admins').doc(req.admin.id).get();
+    const userDoc = await db.collection('users').doc(req.admin.id).get();
 
-    if (!adminDoc.exists) {
+    if (!userDoc.exists) {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    const adminData = adminDoc.data();
-    delete adminData.password; // Don't send password
+    const userData = userDoc.data();
 
     res.json({
       success: true,
       admin: {
-        id: adminDoc.id,
-        ...adminData
-      }
+        id: userDoc.id,
+        email: userData.email,
+        fullName: userData.fullName || userData.full_name || 'Admin',
+        role: userData.role,
+        phone: userData.phoneNumber || userData.phone || '',
+      },
     });
   } catch (error) {
     console.error('Get profile error:', error);
@@ -79,47 +97,30 @@ exports.updateProfile = async (req, res) => {
     const { fullName, email, phone } = req.body;
     const adminId = req.admin.id;
 
-    // Check if email is being changed and if it's already in use
-    if (email) {
-      const adminsRef = db.collection('admins');
-      const emailSnapshot = await adminsRef.where('email', '==', email).get();
-
-      if (!emailSnapshot.empty && emailSnapshot.docs[0].id !== adminId) {
-        return res.status(400).json({ error: 'Email already in use' });
-      }
-    }
-
-    // Update admin profile
-    const updateData = {
-      updatedAt: new Date()
-    };
-
+    const updateData = { updatedAt: new Date() };
     if (fullName !== undefined) updateData.fullName = fullName;
     if (email !== undefined) updateData.email = email;
-    if (phone !== undefined) updateData.phone = phone;
+    if (phone !== undefined) updateData.phoneNumber = phone;
 
-    await db.collection('admins').doc(adminId).update(updateData);
+    await db.collection('users').doc(adminId).update(updateData);
 
-    // Get updated admin data
-    const adminDoc = await db.collection('admins').doc(adminId).get();
-    const adminData = adminDoc.data();
-    delete adminData.password;
+    // تحديث Firebase Auth email إذا تغير
+    if (email) {
+      await admin.auth().updateUser(adminId, { email });
+    }
 
-    // Update localStorage adminData
-    const updatedAdmin = {
-      id: adminDoc.id,
-      email: adminData.email,
-      fullName: adminData.fullName,
-      role: adminData.role
-    };
+    const userDoc = await db.collection('users').doc(adminId).get();
+    const userData = userDoc.data();
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
       admin: {
-        id: adminDoc.id,
-        ...adminData
-      }
+        id: adminId,
+        email: userData.email,
+        fullName: userData.fullName,
+        role: userData.role,
+      },
     });
   } catch (error) {
     console.error('Update profile error:', error);
@@ -127,7 +128,7 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// Change admin password
+// Change admin password — يحدّث كلمة المرور في Firebase Auth
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -136,41 +137,23 @@ exports.changePassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ error: 'Current password and new password are required' });
     }
-
     if (newPassword.length < 6) {
       return res.status(400).json({ error: 'New password must be at least 6 characters' });
     }
 
-    // Get admin document
-    const adminDoc = await db.collection('admins').doc(adminId).get();
-
-    if (!adminDoc.exists) {
-      return res.status(404).json({ error: 'Admin not found' });
-    }
-
-    const adminData = adminDoc.data();
-
-    // Verify current password
-    const isMatch = await bcrypt.compare(currentPassword, adminData.password);
-
-    if (!isMatch) {
+    // تحقق من كلمة المرور الحالية
+    const userDoc = await db.collection('users').doc(adminId).get();
+    const email = userDoc.data()?.email;
+    try {
+      await firebaseSignIn(email, currentPassword);
+    } catch {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
-    // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    // حدّث كلمة المرور في Firebase Auth
+    await admin.auth().updateUser(adminId, { password: newPassword });
 
-    // Update password
-    await db.collection('admins').doc(adminId).update({
-      password: hashedPassword,
-      updatedAt: new Date()
-    });
-
-    res.json({
-      success: true,
-      message: 'Password changed successfully'
-    });
+    res.json({ success: true, message: 'Password changed successfully' });
   } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ error: 'Server error' });
