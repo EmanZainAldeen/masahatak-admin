@@ -1,5 +1,4 @@
-const bcrypt = require('bcryptjs');
-const { db } = require('../config/firebase');
+const { db, admin } = require('../config/firebase');
 
 // List all users (super admin view)
 exports.listUsers = async (req, res) => {
@@ -115,38 +114,45 @@ exports.unsuspendUser = async (req, res) => {
   }
 };
 
-// Create new admin
+// Create new admin — يُنشئ المستخدم في Firebase Auth ثم يكتب في users collection
 exports.createAdmin = async (req, res) => {
   try {
     const { email, fullName, password, role } = req.body;
 
-    // Check if admin already exists
-    const existingAdmin = await db.collection('admins')
-      .where('email', '==', email)
-      .get();
-
-    if (!existingAdmin.empty) {
-      return res.status(400).json({ error: 'Admin with this email already exists' });
+    if (!email || !fullName || !password) {
+      return res.status(400).json({ error: 'email, fullName, and password are required' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create user in Firebase Auth
+    let firebaseUser;
+    try {
+      firebaseUser = await admin.auth().createUser({ email, password, displayName: fullName });
+    } catch (e) {
+      if (e.code === 'auth/email-already-exists') {
+        return res.status(400).json({ error: 'Admin with this email already exists' });
+      }
+      throw e;
+    }
 
-    // Create admin
-    const adminRef = await db.collection('admins').add({
+    const uid = firebaseUser.uid;
+
+    // Write to users collection with admin role
+    await db.collection('users').doc(uid).set({
       email,
       fullName,
-      password: hashedPassword,
       role: role || 'admin',
       status: 'active',
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     res.json({
       success: true,
-      adminId: adminRef.id,
-      message: 'Admin created successfully'
+      adminId: uid,
+      message: 'Admin created successfully',
     });
   } catch (error) {
     console.error('Create admin error:', error);
@@ -164,17 +170,21 @@ exports.removeAdmin = async (req, res) => {
       return res.status(400).json({ error: 'Cannot remove yourself' });
     }
 
-    const adminDoc = await db.collection('admins').doc(uid).get();
+    const userDoc = await db.collection('users').doc(uid).get();
 
-    if (!adminDoc.exists) {
+    if (!userDoc.exists) {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    await db.collection('admins').doc(uid).delete();
+    // Remove admin role (set to user) instead of deleting the account
+    await db.collection('users').doc(uid).update({
+      role: 'user',
+      updatedAt: new Date(),
+    });
 
     res.json({
       success: true,
-      message: 'Admin removed successfully'
+      message: 'Admin removed successfully',
     });
   } catch (error) {
     console.error('Remove admin error:', error);
@@ -228,24 +238,28 @@ exports.getAuditLogs = async (req, res) => {
   }
 };
 
-// List all admins
+// List all admins — reads from users collection where role is admin or super_admin
 exports.listAdmins = async (req, res) => {
   try {
-    const snapshot = await db.collection('admins').orderBy('createdAt', 'desc').get();
+    const [adminSnap, superSnap] = await Promise.all([
+      db.collection('users').where('role', '==', 'admin').get(),
+      db.collection('users').where('role', '==', 'super_admin').get(),
+    ]);
 
-    const admins = snapshot.docs.map(doc => {
-      const admin = doc.data();
-      delete admin.password; // Don't send passwords
-      return {
-        id: doc.id,
-        ...admin
-      };
+    const admins = [...adminSnap.docs, ...superSnap.docs].map(doc => {
+      const data = doc.data();
+      delete data.password;
+      return { id: doc.id, ...data };
     });
 
-    res.json({
-      success: true,
-      admins
+    // Sort by createdAt descending
+    admins.sort((a, b) => {
+      const aTime = a.createdAt?.toMillis?.() || new Date(a.createdAt || 0).getTime();
+      const bTime = b.createdAt?.toMillis?.() || new Date(b.createdAt || 0).getTime();
+      return bTime - aTime;
     });
+
+    res.json({ success: true, admins });
   } catch (error) {
     console.error('List admins error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -257,21 +271,18 @@ exports.getAdminById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const adminDoc = await db.collection('admins').doc(id).get();
+    const adminDoc = await db.collection('users').doc(id).get();
 
     if (!adminDoc.exists) {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    const admin = adminDoc.data();
-    delete admin.password; // Don't send password
+    const adminData = adminDoc.data();
+    delete adminData.password;
 
     res.json({
       success: true,
-      admin: {
-        id: adminDoc.id,
-        ...admin
-      }
+      admin: { id: adminDoc.id, ...adminData },
     });
   } catch (error) {
     console.error('Get admin by ID error:', error);
@@ -302,8 +313,8 @@ exports.updateAdminRole = async (req, res) => {
       return res.status(400).json({ error: 'Cannot change your own role' });
     }
 
-    console.log('Fetching admin document for UID:', uid);
-    const adminDoc = await db.collection('admins').doc(uid).get();
+    console.log('Fetching user document for UID:', uid);
+    const adminDoc = await db.collection('users').doc(uid).get();
 
     if (!adminDoc.exists) {
       console.log('Admin not found for UID:', uid);
@@ -313,9 +324,9 @@ exports.updateAdminRole = async (req, res) => {
     console.log('Current admin data:', adminDoc.data());
     console.log('Updating role to:', role);
 
-    await db.collection('admins').doc(uid).update({
+    await db.collection('users').doc(uid).update({
       role,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     console.log('Admin role updated successfully');
