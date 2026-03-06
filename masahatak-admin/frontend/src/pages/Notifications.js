@@ -26,7 +26,7 @@ import {
   FormControl,
   InputLabel
 } from '@mui/material';
-import { Delete, Send, MarkEmailRead, MarkEmailUnread } from '@mui/icons-material';
+import { Delete, Send, MarkEmailRead } from '@mui/icons-material';
 import api from '../utils/api';
 import MainLayout from '../components/Layout/MainLayout';
 
@@ -50,6 +50,7 @@ const Notifications = () => {
   useEffect(() => {
     fetchNotifications();
     fetchAdmins();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const fetchNotifications = async () => {

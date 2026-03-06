@@ -53,12 +53,14 @@ const Analytics = () => {
 
   useEffect(() => {
     fetchAnalytics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const [revenueRes, bookingsRes, workspacesRes] = await Promise.all([
+      const [revenueRes, , workspacesRes] = await Promise.all([
         api.get(`/analytics/revenue?period=${period}`),
         api.get('/analytics/bookings'),
         api.get('/analytics/popular-workspaces?limit=10')

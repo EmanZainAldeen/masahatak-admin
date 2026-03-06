@@ -27,7 +27,7 @@ import {
   Tabs,
   Tooltip
 } from '@mui/material';
-import { Visibility, Edit, Delete, Add, Block, CheckCircle } from '@mui/icons-material';
+import { Visibility, Delete, Block, CheckCircle } from '@mui/icons-material';
 import api from '../utils/api';
 import MainLayout from '../components/Layout/MainLayout';
 
@@ -50,6 +50,7 @@ const Owners = () => {
 
   useEffect(() => {
     fetchOwners();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const fetchOwners = async () => {

@@ -49,6 +49,7 @@ const Reviews = () => {
 
   useEffect(() => {
     fetchReviews();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage]);
 
   const fetchReviews = async () => {

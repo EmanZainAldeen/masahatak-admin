@@ -56,6 +56,7 @@ const Bookings = () => {
 
   useEffect(() => {
     fetchBookings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, statusFilter]);
 
   const fetchBookings = async () => {

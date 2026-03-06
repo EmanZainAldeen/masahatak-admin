@@ -58,6 +58,7 @@ const Workspaces = () => {
 
   useEffect(() => {
     fetchWorkspaces();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, statusFilter]);
 
   const fetchWorkspaces = async () => {

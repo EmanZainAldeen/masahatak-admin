@@ -13,9 +13,7 @@ import {
   People,
   Business,
   MeetingRoom,
-  TrendingUp,
   AttachMoney,
-  EventAvailable
 } from '@mui/icons-material';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '../utils/api';
@@ -66,12 +64,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, revenueRes, bookingsRes, workspacesRes] = await Promise.all([
+      const [statsRes, revenueRes, , workspacesRes] = await Promise.all([
         api.get('/analytics/dashboard-stats'),
         api.get('/analytics/revenue?period=month'),
         api.get('/analytics/bookings'),

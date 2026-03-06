@@ -10,11 +10,9 @@ import {
   Grid,
   Alert,
   CircularProgress,
-  Divider
 } from '@mui/material';
 import { Save, Lock } from '@mui/icons-material';
 import api from '../utils/api';
-import authService from '../services/authService';
 import MainLayout from '../components/Layout/MainLayout';
 
 const Settings = () => {

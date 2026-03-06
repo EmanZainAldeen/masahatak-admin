@@ -67,6 +67,7 @@ const Users = () => {
 
   useEffect(() => {
     fetchUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, search, statusFilter]);
 
   const fetchUsers = async () => {

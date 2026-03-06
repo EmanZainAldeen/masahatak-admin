@@ -44,6 +44,7 @@ const Payments = () => {
 
   useEffect(() => {
     fetchPayments();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, statusFilter]);
 
   const fetchPayments = async () => {
