@@ -136,6 +136,134 @@ exports.updateWorkspaceStatus = async (req, res) => {
   }
 };
 
+// Create workspace (admin-initiated)
+exports.createWorkspace = async (req, res) => {
+  try {
+    const { spaceName, name, address, description, basePriceValue, basePriceUnit,
+      location, workingHours, policySections, amenities, images,
+      hidden, totalSeats, adminId, adminName } = req.body;
+
+    const spName = spaceName || name || '';
+    const seats = parseInt(totalSeats) || 0;
+
+    const data = {
+      spaceName: spName,
+      name: spName,
+      address: address || '',
+      description: description || '',
+      basePriceValue: parseFloat(basePriceValue) || 0,
+      basePriceUnit: basePriceUnit || 'day',
+      location: location || null,
+      workingHours: workingHours || [],
+      policySections: policySections || [],
+      amenities: amenities || [],
+      images: images || [],
+      hidden: hidden === true || hidden === 'true',
+      totalSeats: seats,
+      availableSeats: seats,
+      adminId: adminId || null,
+      adminName: adminName || null,
+      status: 'active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: req.admin.id,
+    };
+
+    const docRef = await db.collection('workspaces').add(data);
+
+    if (adminId) {
+      try {
+        const adminDoc = await db.collection('users').doc(adminId).get();
+        if (adminDoc.exists) {
+          const ids = Array.from(new Set([...(adminDoc.data().assignedSpaceIds || []), docRef.id]));
+          await db.collection('users').doc(adminId).update({ assignedSpaceIds: ids });
+        }
+      } catch (_) {}
+    }
+
+    res.json({ success: true, id: docRef.id });
+  } catch (error) {
+    console.error('Create workspace error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Update workspace
+exports.updateWorkspace = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { spaceName, name, address, description, basePriceValue, basePriceUnit,
+      location, workingHours, policySections, amenities, images,
+      hidden, totalSeats, adminId, adminName } = req.body;
+
+    const oldDoc = await db.collection('workspaces').doc(id).get();
+    const oldAdminId = oldDoc.exists ? oldDoc.data().adminId : null;
+    const spName = spaceName || name || '';
+
+    const data = {
+      spaceName: spName,
+      name: spName,
+      address: address || '',
+      description: description || '',
+      basePriceValue: parseFloat(basePriceValue) || 0,
+      basePriceUnit: basePriceUnit || 'day',
+      location: location || null,
+      workingHours: workingHours || [],
+      policySections: policySections || [],
+      amenities: amenities || [],
+      images: images || [],
+      hidden: hidden === true || hidden === 'true',
+      totalSeats: parseInt(totalSeats) || 0,
+      adminId: adminId || null,
+      adminName: adminName || null,
+      updatedAt: new Date(),
+    };
+
+    await db.collection('workspaces').doc(id).set(data, { merge: true });
+
+    if (oldAdminId !== adminId) {
+      if (oldAdminId) {
+        try {
+          const oldAdmin = await db.collection('users').doc(oldAdminId).get();
+          if (oldAdmin.exists) {
+            const ids = (oldAdmin.data().assignedSpaceIds || []).filter(s => s !== id);
+            await db.collection('users').doc(oldAdminId).update({ assignedSpaceIds: ids });
+          }
+        } catch (_) {}
+      }
+      if (adminId) {
+        try {
+          const newAdmin = await db.collection('users').doc(adminId).get();
+          if (newAdmin.exists) {
+            const ids = Array.from(new Set([...(newAdmin.data().assignedSpaceIds || []), id]));
+            await db.collection('users').doc(adminId).update({ assignedSpaceIds: ids });
+          }
+        } catch (_) {}
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update workspace error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Get sub admins list for dropdown
+exports.getSubAdmins = async (req, res) => {
+  try {
+    const snap = await db.collection('users').where('role', '==', 'sub_admin').get();
+    const subAdmins = snap.docs.map(doc => ({
+      id: doc.id,
+      fullName: doc.data().fullName || doc.data().full_name || 'Unknown',
+      email: doc.data().email || '',
+    }));
+    res.json({ success: true, subAdmins });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 // Delete workspace
 exports.deleteWorkspace = async (req, res) => {
   try {
