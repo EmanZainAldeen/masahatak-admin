@@ -140,11 +140,12 @@ exports.updateWorkspaceStatus = async (req, res) => {
 exports.createWorkspace = async (req, res) => {
   try {
     const { spaceName, name, address, description, basePriceValue, basePriceUnit,
-      location, workingHours, policySections, amenities, images,
+      location, lat, lng, workingHours, policySections, amenities, images,
       hidden, totalSeats, adminId, adminName } = req.body;
 
     const spName = spaceName || name || '';
     const seats = parseInt(totalSeats) || 0;
+    const resolvedLocation = location || (lat != null && lng != null ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null);
 
     const data = {
       spaceName: spName,
@@ -153,7 +154,7 @@ exports.createWorkspace = async (req, res) => {
       description: description || '',
       basePriceValue: parseFloat(basePriceValue) || 0,
       basePriceUnit: basePriceUnit || 'day',
-      location: location || null,
+      location: resolvedLocation,
       workingHours: workingHours || [],
       policySections: policySections || [],
       amenities: amenities || [],
@@ -193,12 +194,13 @@ exports.updateWorkspace = async (req, res) => {
   try {
     const { id } = req.params;
     const { spaceName, name, address, description, basePriceValue, basePriceUnit,
-      location, workingHours, policySections, amenities, images,
+      location, lat, lng, workingHours, policySections, amenities, images,
       hidden, totalSeats, adminId, adminName } = req.body;
 
     const oldDoc = await db.collection('workspaces').doc(id).get();
     const oldAdminId = oldDoc.exists ? oldDoc.data().adminId : null;
     const spName = spaceName || name || '';
+    const resolvedLocation = location || (lat != null && lng != null ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null);
 
     const data = {
       spaceName: spName,
@@ -207,7 +209,7 @@ exports.updateWorkspace = async (req, res) => {
       description: description || '',
       basePriceValue: parseFloat(basePriceValue) || 0,
       basePriceUnit: basePriceUnit || 'day',
-      location: location || null,
+      location: resolvedLocation,
       workingHours: workingHours || [],
       policySections: policySections || [],
       amenities: amenities || [],
