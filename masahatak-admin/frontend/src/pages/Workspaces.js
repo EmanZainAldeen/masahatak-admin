@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Card, CardContent, Typography, Table, TableBody, TableCell,
@@ -11,10 +11,30 @@ import {
 import {
   Visibility, CheckCircle, Cancel, Delete, FilterList,
   MeetingRoom, LocationOn, Add, Edit, Close, AddCircleOutline,
-  RemoveCircleOutline
+  RemoveCircleOutline, Upload, MyLocation
 } from '@mui/icons-material';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import api from '../utils/api';
 import MainLayout from '../components/Layout/MainLayout';
+
+// Fix leaflet default icon
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+const SUPABASE_URL = 'https://fbepuxcsyrerfhzpqvmy.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiZXB1eGNzeXJlcmZoenBxdm15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMzg0MjcsImV4cCI6MjA4ODcxNDQyN30.mNJOsm7RGIaX9OMw1c5R-3O9QV9bixoGc0rZKKecOLk';
+const SUPABASE_BUCKET = 'image_masahtak';
+
+function LocationMarker({ position, onPick }) {
+  useMapEvents({ click(e) { onPick(e.latlng.lat, e.latlng.lng); } });
+  return position ? <Marker position={position} /> : null;
+}
 
 const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const DAY_LABELS = { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday', fri: 'Friday', sat: 'Saturday' };
@@ -30,6 +50,7 @@ const emptyForm = () => ({
   basePriceValue: '', basePriceUnit: 'day',
   totalSeats: '', hidden: false,
   adminId: '', adminName: '',
+  lat: null, lng: null,
   workingHours: DAYS.map((day, i) => ({ day, open: '08:00', close: '22:00', closed: i >= 5 })),
   amenities: DEFAULT_AMENITIES.map(a => ({ ...a, selected: false, isCustom: false })),
   images: [],
@@ -61,6 +82,8 @@ const formFromWorkspace = (ws) => ({
     const custom = existing.filter(a => a.isCustom).map(a => ({ ...a, selected: true }));
     return [...base, ...custom.filter(c => !base.some(b => b.id === c.id))];
   })(),
+  lat: ws.lat ?? ws.location?.lat ?? null,
+  lng: ws.lng ?? ws.location?.lng ?? null,
   images: ws.images || [],
   policySections: ws.policySections || [],
 });
@@ -89,6 +112,9 @@ const Workspaces = () => {
   const [saving, setSaving] = useState(false);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newAmenityName, setNewAmenityName] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [mapDialogOpen, setMapDialogOpen] = useState(false);
+  const [mapCenter] = useState([31.9, 35.9]); // default center (Amman, Jordan)
 
   useEffect(() => { fetchWorkspaces(); }, [page, rowsPerPage, statusFilter]); // eslint-disable-line
   useEffect(() => { fetchSubAdmins(); }, []);
@@ -161,6 +187,8 @@ const Workspaces = () => {
         ...form,
         basePriceValue: parseFloat(form.basePriceValue) || 0,
         totalSeats: parseInt(form.totalSeats) || 0,
+        lat: form.lat ? parseFloat(form.lat) : null,
+        lng: form.lng ? parseFloat(form.lng) : null,
       };
 
       if (editId) {
@@ -260,6 +288,34 @@ const Workspaces = () => {
     ...f,
     policySections: f.policySections.map(s => s.id === id ? { ...s, bullets: s.bullets.filter((_, i) => i !== idx) } : s),
   }));
+
+  const uploadImage = useCallback(async (file) => {
+    if (!file) return;
+    setUploadingImage(true);
+    setError('');
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `workspace_${Date.now()}.${ext}`;
+      const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${fileName}`;
+      const res = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': file.type,
+          'x-upsert': 'true',
+        },
+        body: file,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${SUPABASE_BUCKET}/${fileName}`;
+      setForm(f => ({ ...f, images: [...f.images, publicUrl] }));
+    } catch (err) {
+      setError('Image upload failed: ' + err.message);
+    } finally {
+      setUploadingImage(false);
+    }
+  }, []);
 
   return (
     <MainLayout>
@@ -397,6 +453,19 @@ const Workspaces = () => {
                   <TextField fullWidth label="Address *" value={form.address} onChange={e => setField('address', e.target.value)} />
                 </Grid>
                 <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                    <Button variant="outlined" startIcon={<MyLocation />} onClick={() => setMapDialogOpen(true)}>
+                      {form.lat && form.lng ? 'Change Location on Map' : 'Pick Location on Map'}
+                    </Button>
+                    {form.lat && form.lng && (
+                      <Typography variant="body2" color="text.secondary">
+                        📍 {Number(form.lat).toFixed(5)}, {Number(form.lng).toFixed(5)}
+                        <IconButton size="small" onClick={() => setForm(f => ({ ...f, lat: null, lng: null }))} sx={{ ml: 0.5 }}><Close fontSize="small" /></IconButton>
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
                   <TextField fullWidth multiline rows={3} label="Description" value={form.description} onChange={e => setField('description', e.target.value)} />
                 </Grid>
               </Grid>
@@ -518,18 +587,30 @@ const Workspaces = () => {
               <Stack spacing={1} sx={{ mb: 1 }}>
                 {form.images.map((url, i) => (
                   <Paper key={i} variant="outlined" sx={{ p: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {url.match(/\.(jpg|jpeg|png|gif|webp)$/i) && (
-                      <Box component="img" src={url} alt="" sx={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 1 }} onError={e => { e.target.style.display = 'none'; }} />
-                    )}
+                    <Box component="img" src={url} alt="" sx={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 1 }} onError={e => { e.target.style.display = 'none'; }} />
                     <Typography variant="body2" sx={{ flex: 1, wordBreak: 'break-all' }}>{url}</Typography>
                     <IconButton size="small" color="error" onClick={() => removeImage(i)}><RemoveCircleOutline fontSize="small" /></IconButton>
                   </Paper>
                 ))}
               </Stack>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField size="small" fullWidth label="Image URL" value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && addImage()} />
-                <Button variant="outlined" size="small" onClick={addImage} startIcon={<Add />}>Add</Button>
-              </Box>
+              <Stack spacing={1}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={uploadingImage ? <CircularProgress size={16} /> : <Upload />}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                    <input type="file" hidden accept="image/*" onChange={e => { uploadImage(e.target.files[0]); e.target.value = ''; }} />
+                  </Button>
+                  <Typography variant="caption" color="text.secondary">or add by URL below</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField size="small" fullWidth label="Image URL" value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && addImage()} />
+                  <Button variant="outlined" size="small" onClick={addImage} startIcon={<Add />}>Add</Button>
+                </Box>
+              </Stack>
             </Box>
 
             <Divider />
@@ -651,6 +732,41 @@ const Workspaces = () => {
             </Button>
           )}
           <Button onClick={() => setDetailsDialog(false)}>{t('common.close')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Map Picker Dialog */}
+      <Dialog open={mapDialogOpen} onClose={() => setMapDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">Pick Location on Map</Typography>
+          <IconButton onClick={() => setMapDialogOpen(false)}><Close /></IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, height: 450 }}>
+          <Typography variant="caption" sx={{ p: 1, display: 'block', bgcolor: 'info.light', color: 'info.contrastText' }}>
+            Click anywhere on the map to set the workspace location
+          </Typography>
+          <MapContainer
+            center={form.lat && form.lng ? [form.lat, form.lng] : mapCenter}
+            zoom={12}
+            style={{ height: '400px', width: '100%' }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <LocationMarker
+              position={form.lat && form.lng ? [form.lat, form.lng] : null}
+              onPick={(lat, lng) => { setField('lat', lat); setField('lng', lng); }}
+            />
+          </MapContainer>
+        </DialogContent>
+        <DialogActions>
+          {form.lat && form.lng && (
+            <Typography variant="body2" color="text.secondary" sx={{ flex: 1, ml: 2 }}>
+              Selected: {Number(form.lat).toFixed(5)}, {Number(form.lng).toFixed(5)}
+            </Typography>
+          )}
+          <Button onClick={() => setMapDialogOpen(false)} variant="contained">Done</Button>
         </DialogActions>
       </Dialog>
 
