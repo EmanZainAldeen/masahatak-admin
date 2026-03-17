@@ -736,29 +736,38 @@ const Workspaces = () => {
       </Dialog>
 
       {/* Map Picker Dialog */}
-      <Dialog open={mapDialogOpen} onClose={() => setMapDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={mapDialogOpen}
+        onClose={() => setMapDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        TransitionProps={{ onEntered: () => window.dispatchEvent(new Event('resize')) }}
+      >
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6">Pick Location on Map</Typography>
           <IconButton onClick={() => setMapDialogOpen(false)}><Close /></IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 0, height: 450 }}>
+        <DialogContent sx={{ p: 0, height: 450, overflow: 'hidden' }}>
           <Typography variant="caption" sx={{ p: 1, display: 'block', bgcolor: 'info.light', color: 'info.contrastText' }}>
             Click anywhere on the map to set the workspace location
           </Typography>
-          <MapContainer
-            center={form.lat && form.lng ? [form.lat, form.lng] : mapCenter}
-            zoom={12}
-            style={{ height: '400px', width: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <LocationMarker
-              position={form.lat && form.lng ? [form.lat, form.lng] : null}
-              onPick={(lat, lng) => { setField('lat', lat); setField('lng', lng); }}
-            />
-          </MapContainer>
+          {mapDialogOpen && (
+            <MapContainer
+              key={mapDialogOpen ? 'open' : 'closed'}
+              center={form.lat && form.lng ? [form.lat, form.lng] : mapCenter}
+              zoom={12}
+              style={{ height: '400px', width: '100%' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <LocationMarker
+                position={form.lat && form.lng ? [form.lat, form.lng] : null}
+                onPick={(lat, lng) => { setField('lat', lat); setField('lng', lng); }}
+              />
+            </MapContainer>
+          )}
         </DialogContent>
         <DialogActions>
           {form.lat && form.lng && (
