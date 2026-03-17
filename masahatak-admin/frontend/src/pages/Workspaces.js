@@ -301,9 +301,7 @@ const Workspaces = () => {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'apikey': SUPABASE_KEY,
           'Content-Type': file.type,
-          'x-upsert': 'true',
         },
         body: file,
       });
