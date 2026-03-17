@@ -51,6 +51,7 @@ const formFromWorkspace = (ws) => ({
     : DAYS.map((day, i) => ({ day, open: '08:00', close: '22:00', closed: i >= 5 })),
   amenities: (() => {
     const existing = ws.amenities || [];
+    // eslint-disable-next-line no-unused-vars
     const selectedIds = existing.filter(a => a.selected !== false).map(a => a.id || a.name);
     const base = DEFAULT_AMENITIES.map(a => ({
       ...a,
