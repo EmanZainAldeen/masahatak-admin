@@ -272,25 +272,22 @@ exports.deleteWorkspace = async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
 
-    console.log('Delete workspace request:', { id, reason, adminId: req.admin.id });
+    // Save audit record before deleting
+    const wsDoc = await db.collection('workspaces').doc(id).get();
+    if (wsDoc.exists) {
+      await db.collection('deleted_workspaces').doc(id).set({
+        ...wsDoc.data(),
+        status: 'deleted',
+        statusReason: reason || '',
+        deletedAt: new Date(),
+        deletedBy: req.admin.id,
+      });
+    }
 
-    const updateData = {
-      status: 'deleted',
-      statusReason: reason || '',
-      deletedAt: new Date(),
-      deletedBy: req.admin.id
-    };
+    // Actually delete the document so it disappears from the Flutter app
+    await db.collection('workspaces').doc(id).delete();
 
-    console.log('Updating workspace with:', updateData);
-
-    await db.collection('workspaces').doc(id).update(updateData);
-
-    console.log('Workspace deleted successfully:', id);
-
-    res.json({
-      success: true,
-      message: 'Workspace deleted successfully'
-    });
+    res.json({ success: true, message: 'Workspace deleted successfully' });
   } catch (error) {
     console.error('Delete workspace error:', error);
     res.status(500).json({ error: 'Server error' });
