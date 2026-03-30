@@ -12,6 +12,7 @@ const paymentsRoutes = require('./payments');
 const notificationsRoutes = require('./notifications');
 const ownersRoutes = require('./owners');
 const superadminRoutes = require('./superadmin');
+const requestSpacesRoutes = require('./requestSpaces');
 
 router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
@@ -24,5 +25,6 @@ router.use('/payments', paymentsRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/owners', ownersRoutes);
 router.use('/superadmin', superadminRoutes);
+router.use('/request-spaces', requestSpacesRoutes);
 
 module.exports = router;

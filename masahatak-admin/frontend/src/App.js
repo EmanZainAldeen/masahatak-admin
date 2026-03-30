@@ -18,6 +18,7 @@ import Notifications from './pages/Notifications';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Admins from './pages/Admins';
+import RequestAddSpace from './pages/RequestAddSpace';
 
 function App() {
   return (
@@ -114,6 +115,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Admins />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/request-add-space"
+            element={
+              <PrivateRoute>
+                <RequestAddSpace />
               </PrivateRoute>
             }
           />

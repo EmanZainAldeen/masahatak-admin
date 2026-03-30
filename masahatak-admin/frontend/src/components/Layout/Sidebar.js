@@ -28,6 +28,7 @@ import {
   Logout as LogoutIcon,
   Settings as SettingsIcon,
   Language as LanguageIcon,
+  AddBusiness as AddBusinessIcon,
 } from '@mui/icons-material';
 import authService from '../../services/authService';
 
@@ -49,6 +50,7 @@ const Sidebar = () => {
     { text: t('nav.payments'), icon: <PaymentIcon />, path: '/payments' },
     { text: t('nav.reviews'), icon: <ReviewIcon />, path: '/reviews' },
     { text: t('nav.notifications'), icon: <NotificationsIcon />, path: '/notifications' },
+    { text: 'Request Add Space', icon: <AddBusinessIcon />, path: '/request-add-space' },
     { text: t('nav.admins'), icon: <AdminIcon />, path: '/admins', superAdminOnly: true },
   ];
 
