@@ -16,7 +16,7 @@ import MainLayout from '../components/Layout/MainLayout';
 const statusColor = { pending: 'warning', approved: 'success', rejected: 'error' };
 
 const RequestAddSpace = () => {
-  const { t } = useTranslation();
+  useTranslation();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
