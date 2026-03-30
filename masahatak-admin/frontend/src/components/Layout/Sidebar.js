@@ -24,7 +24,6 @@ import {
   Payment as PaymentIcon,
   Notifications as NotificationsIcon,
   Store as StoreIcon,
-  AdminPanelSettings as AdminIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
   Language as LanguageIcon,
@@ -51,7 +50,6 @@ const Sidebar = () => {
     { text: t('nav.reviews'), icon: <ReviewIcon />, path: '/reviews' },
     { text: t('nav.notifications'), icon: <NotificationsIcon />, path: '/notifications' },
     { text: 'Request Add Space', icon: <AddBusinessIcon />, path: '/request-add-space' },
-    { text: t('nav.admins'), icon: <AdminIcon />, path: '/admins', superAdminOnly: true },
   ];
 
   const handleLogout = () => {
