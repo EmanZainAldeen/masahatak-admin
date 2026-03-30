@@ -1,49 +1,57 @@
 const { db, auth } = require('../config/firebase');
 
-// Get all providers
+// Get all providers (workspace owners/managers from users collection)
 exports.getAllProviders = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = 'all' } = req.query;
 
-    let query = db.collection('providers');
+    // Fetch space owners from users collection (roles: sub_admin, owner, provider)
+    const ownerRoles = ['sub_admin', 'owner', 'provider'];
+    const snapshots = await Promise.all(
+      ownerRoles.map(role => db.collection('users').where('role', '==', role).get())
+    );
 
+    let providers = [];
+    const seen = new Set();
+    snapshots.forEach(snap => {
+      snap.docs.forEach(doc => {
+        if (!seen.has(doc.id)) {
+          seen.add(doc.id);
+          providers.push({ id: doc.id, ...doc.data() });
+        }
+      });
+    });
+
+    // Filter by status if provided
     if (status !== 'all') {
-      query = query.where('status', '==', status);
+      providers = providers.filter(p => (p.status || 'active') === status);
     }
 
-    const snapshot = await query.get();
-    let providers = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    // Remove passwords
+    providers = providers.map(({ password, ...p }) => p);
 
     // Get workspace counts for each provider
     const providersWithStats = await Promise.all(
       providers.map(async (provider) => {
         const workspacesSnapshot = await db.collection('workspaces')
-          .where('ownerId', '==', provider.id)
+          .where('adminId', '==', provider.id)
           .get();
-
-        return {
-          ...provider,
-          workspaceCount: workspacesSnapshot.size
-        };
+        return { ...provider, workspaceCount: workspacesSnapshot.size };
       })
     );
 
     // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedProviders = providersWithStats.slice(startIndex, endIndex);
+    const startIndex = (parseInt(page) - 1) * parseInt(limit);
+    const paginated = providersWithStats.slice(startIndex, startIndex + parseInt(limit));
 
     res.json({
       success: true,
-      providers: paginatedProviders,
+      providers: paginated,
       pagination: {
         total: providersWithStats.length,
         page: parseInt(page),
         limit: parseInt(limit),
-        totalPages: Math.ceil(providersWithStats.length / limit)
+        totalPages: Math.ceil(providersWithStats.length / parseInt(limit))
       }
     });
   } catch (error) {
