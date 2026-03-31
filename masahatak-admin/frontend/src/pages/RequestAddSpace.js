@@ -60,11 +60,19 @@ const RequestAddSpace = () => {
 
   const handleConfirmAction = async () => {
     try {
-      await api.put(`/request-spaces/${selectedRequest.idRequset}/status`, {
-        status: actionDialog.type,
-        adminNote: actionDialog.adminNote
-      });
-      setSuccess(`Request ${actionDialog.type} successfully`);
+      if (actionDialog.type === 'approved') {
+        // Approve: creates a workspace in workspaces collection
+        await api.post(`/request-spaces/${selectedRequest.id}/approve`, {
+          adminNote: actionDialog.adminNote
+        });
+        setSuccess('Request approved and workspace created successfully');
+      } else {
+        await api.put(`/request-spaces/${selectedRequest.id}/status`, {
+          status: actionDialog.type,
+          adminNote: actionDialog.adminNote
+        });
+        setSuccess('Request rejected');
+      }
       setActionDialog({ open: false, type: '', adminNote: '' });
       setDetailsOpen(false);
       fetchRequests();
@@ -130,7 +138,7 @@ const RequestAddSpace = () => {
                       </TableRow>
                     ) : (
                       requests.map((req) => (
-                        <TableRow key={req.idRequset} hover>
+                        <TableRow key={req.id} hover>
                           <TableCell>
                             <Typography fontWeight={600}>{req.nameSpace || '—'}</Typography>
                           </TableCell>
@@ -157,7 +165,7 @@ const RequestAddSpace = () => {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Delete">
-                              <IconButton size="small" color="error" onClick={() => setDeleteDialog({ open: true, id: req.idRequset })}>
+                              <IconButton size="small" color="error" onClick={() => setDeleteDialog({ open: true, id: req.id })}>
                                 <Delete />
                               </IconButton>
                             </Tooltip>
