@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db, COLLECTIONS } = require('../config/firebase');
 
 const COLLECTION = 'spaceRequests'; // Flutter app saves here
 
@@ -107,7 +107,7 @@ exports.approveRequest = async (req, res) => {
       createdBy: req.admin?.id || 'admin',
     };
 
-    const wsRef = await db.collection('workspaces').add(workspace);
+    const wsRef = await db.collection(COLLECTIONS.SPACES).add(workspace);
 
     // Mark request as approved
     await db.collection(COLLECTION).doc(req.params.id).update({

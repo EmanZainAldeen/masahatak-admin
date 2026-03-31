@@ -262,6 +262,7 @@ const Users = () => {
                   <TableCell>{t('users.fullName')}</TableCell>
                   <TableCell>{t('users.email')}</TableCell>
                   <TableCell>{t('users.phone')}</TableCell>
+                  <TableCell>Role</TableCell>
                   <TableCell>{t('common.status')}</TableCell>
                   <TableCell>{t('users.joinedDate')}</TableCell>
                   <TableCell align="center">{t('common.actions')}</TableCell>
@@ -270,13 +271,13 @@ const Users = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                       <Typography color="text.secondary">{t('users.noUsers')}</Typography>
                     </TableCell>
                   </TableRow>
@@ -286,6 +287,19 @@ const Users = () => {
                       <TableCell>{user.fullName || 'N/A'}</TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.role || 'user'}
+                          color={
+                            user.role === 'super_admin' ? 'error' :
+                            user.role === 'admin' ? 'warning' :
+                            user.role === 'sub_admin' ? 'info' :
+                            user.role === 'owner' ? 'secondary' : 'default'
+                          }
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
                       <TableCell>
                         <Chip
                           label={user.status || 'active'}

@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db, COLLECTIONS } = require('../config/firebase');
 
 // Get owner profile
 exports.getOwnerProfile = async (req, res) => {
@@ -57,7 +57,7 @@ exports.createSpace = async (req, res) => {
   try {
     const { name, city, location, amenities, pricing, images, description } = req.body;
 
-    const spaceRef = await db.collection('workspaces').add({
+    const spaceRef = await db.collection(COLLECTIONS.SPACES).add({
       spaceName: name,
       city,
       location,
@@ -89,7 +89,7 @@ exports.listOwnerSpaces = async (req, res) => {
     const { page = 1, limit = 20, status } = req.query;
 
     // Get all workspaces for this owner
-    const snapshot = await db.collection('workspaces')
+    const snapshot = await db.collection(COLLECTIONS.SPACES)
       .where('providerId', '==', ownerId)
       .get();
 
@@ -139,13 +139,13 @@ exports.updateSpace = async (req, res) => {
     const { spaceId } = req.params;
     const spaceFields = req.body;
 
-    const spaceDoc = await db.collection('workspaces').doc(spaceId).get();
+    const spaceDoc = await db.collection(COLLECTIONS.SPACES).doc(spaceId).get();
 
     if (!spaceDoc.exists) {
       return res.status(404).json({ error: 'Space not found' });
     }
 
-    await db.collection('workspaces').doc(spaceId).update({
+    await db.collection(COLLECTIONS.SPACES).doc(spaceId).update({
       ...spaceFields,
       updatedAt: new Date()
     });
@@ -165,13 +165,13 @@ exports.deleteSpace = async (req, res) => {
   try {
     const { spaceId } = req.params;
 
-    const spaceDoc = await db.collection('workspaces').doc(spaceId).get();
+    const spaceDoc = await db.collection(COLLECTIONS.SPACES).doc(spaceId).get();
 
     if (!spaceDoc.exists) {
       return res.status(404).json({ error: 'Space not found' });
     }
 
-    await db.collection('workspaces').doc(spaceId).delete();
+    await db.collection(COLLECTIONS.SPACES).doc(spaceId).delete();
 
     res.json({
       success: true,
@@ -189,13 +189,13 @@ exports.blockDates = async (req, res) => {
     const { spaceId } = req.params;
     const { startDate, endDate } = req.body;
 
-    const spaceDoc = await db.collection('workspaces').doc(spaceId).get();
+    const spaceDoc = await db.collection(COLLECTIONS.SPACES).doc(spaceId).get();
 
     if (!spaceDoc.exists) {
       return res.status(404).json({ error: 'Space not found' });
     }
 
-    const blockRef = await db.collection('workspaces').doc(spaceId)
+    const blockRef = await db.collection(COLLECTIONS.SPACES).doc(spaceId)
       .collection('blocks').add({
         startDate: new Date(startDate),
         endDate: new Date(endDate),
@@ -218,7 +218,7 @@ exports.removeBlock = async (req, res) => {
   try {
     const { spaceId, blockId } = req.params;
 
-    await db.collection('workspaces').doc(spaceId)
+    await db.collection(COLLECTIONS.SPACES).doc(spaceId)
       .collection('blocks').doc(blockId).delete();
 
     res.json({
@@ -288,12 +288,12 @@ exports.listOwnerAssistants = async (req, res) => {
     const { ownerId } = req.params;
 
     // Get all spaces belonging to this owner
-    const spacesSnap = await db.collection('workspaces')
+    const spacesSnap = await db.collection(COLLECTIONS.SPACES)
       .where('providerId', '==', ownerId)
       .get();
 
     // Also check createdBy field for admin-created spaces
-    const spacesSnap2 = await db.collection('workspaces')
+    const spacesSnap2 = await db.collection(COLLECTIONS.SPACES)
       .where('adminId', '!=', null)
       .get();
 

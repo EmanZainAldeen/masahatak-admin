@@ -1,11 +1,11 @@
-const { db } = require('../config/firebase');
+const { db, COLLECTIONS } = require('../config/firebase');
 
 // Get all workspaces
 exports.getAllWorkspaces = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = 'all' } = req.query;
 
-    let query = db.collection('workspaces');
+    let query = db.collection(COLLECTIONS.SPACES);
 
     if (status !== 'all') {
       query = query.where('status', '==', status);
@@ -43,7 +43,7 @@ exports.getWorkspaceById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const workspaceDoc = await db.collection('workspaces').doc(id).get();
+    const workspaceDoc = await db.collection(COLLECTIONS.SPACES).doc(id).get();
 
     if (!workspaceDoc.exists) {
       return res.status(404).json({ error: 'Workspace not found' });
@@ -124,7 +124,7 @@ exports.updateWorkspaceStatus = async (req, res) => {
       updateData.rejectionReason = rejectionReason;
     }
 
-    await db.collection('workspaces').doc(id).update(updateData);
+    await db.collection(COLLECTIONS.SPACES).doc(id).update(updateData);
 
     res.json({
       success: true,
@@ -170,7 +170,7 @@ exports.createWorkspace = async (req, res) => {
       createdBy: req.admin.id,
     };
 
-    const docRef = await db.collection('workspaces').add(data);
+    const docRef = await db.collection(COLLECTIONS.SPACES).add(data);
 
     if (adminId) {
       try {
@@ -197,7 +197,7 @@ exports.updateWorkspace = async (req, res) => {
       location, lat, lng, workingHours, policySections, amenities, images,
       hidden, totalSeats, adminId, adminName } = req.body;
 
-    const oldDoc = await db.collection('workspaces').doc(id).get();
+    const oldDoc = await db.collection(COLLECTIONS.SPACES).doc(id).get();
     const oldAdminId = oldDoc.exists ? oldDoc.data().adminId : null;
     const spName = spaceName || name || '';
     const resolvedLocation = location || (lat != null && lng != null ? { lat: parseFloat(lat), lng: parseFloat(lng) } : null);
@@ -221,7 +221,7 @@ exports.updateWorkspace = async (req, res) => {
       updatedAt: new Date(),
     };
 
-    await db.collection('workspaces').doc(id).set(data, { merge: true });
+    await db.collection(COLLECTIONS.SPACES).doc(id).set(data, { merge: true });
 
     if (oldAdminId !== adminId) {
       if (oldAdminId) {
@@ -273,7 +273,7 @@ exports.deleteWorkspace = async (req, res) => {
     const { reason } = req.body;
 
     // Save audit record before deleting
-    const wsDoc = await db.collection('workspaces').doc(id).get();
+    const wsDoc = await db.collection(COLLECTIONS.SPACES).doc(id).get();
     if (wsDoc.exists) {
       await db.collection('deleted_workspaces').doc(id).set({
         ...wsDoc.data(),
@@ -285,7 +285,7 @@ exports.deleteWorkspace = async (req, res) => {
     }
 
     // Actually delete the document so it disappears from the Flutter app
-    await db.collection('workspaces').doc(id).delete();
+    await db.collection(COLLECTIONS.SPACES).doc(id).delete();
 
     res.json({ success: true, message: 'Workspace deleted successfully' });
   } catch (error) {

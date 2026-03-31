@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db, COLLECTIONS } = require('../config/firebase');
 
 // Get all bookings
 exports.getAllBookings = async (req, res) => {
@@ -35,7 +35,7 @@ exports.getAllBookings = async (req, res) => {
       paginatedBookings.map(async (booking) => {
         const [userDoc, workspaceDoc] = await Promise.all([
           db.collection('users').doc(booking.userId).get(),
-          db.collection('workspaces').doc(booking.workspaceId).get()
+          db.collection(COLLECTIONS.SPACES).doc(booking.workspaceId).get()
         ]);
 
         return {
@@ -86,7 +86,7 @@ exports.getBookingById = async (req, res) => {
     // Get related data
     const [userDoc, workspaceDoc, paymentDoc] = await Promise.all([
       db.collection('users').doc(booking.userId).get(),
-      db.collection('workspaces').doc(booking.workspaceId).get(),
+      db.collection(COLLECTIONS.SPACES).doc(booking.workspaceId).get(),
       db.collection('payments').where('bookingId', '==', id).limit(1).get()
     ]);
 

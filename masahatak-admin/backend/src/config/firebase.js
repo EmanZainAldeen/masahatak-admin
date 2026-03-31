@@ -16,4 +16,13 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const auth = admin.auth();
 
-module.exports = { admin, db, auth };
+// Collection name constants — change here if Firestore collection names change
+const COLLECTIONS = {
+  SPACES: 'spaces',        // main workspaces/spaces collection (Flutter app uses 'spaces')
+  USERS: 'users',
+  BOOKINGS: 'bookings',
+  PROVIDERS: 'providers',
+  REVIEWS: 'reviews',
+};
+
+module.exports = { admin, db, auth, COLLECTIONS };

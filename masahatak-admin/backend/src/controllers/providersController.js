@@ -1,12 +1,12 @@
-const { db, auth } = require('../config/firebase');
+const { db, auth, COLLECTIONS } = require('../config/firebase');
 
 // Get all providers (workspace owners/managers from users collection)
 exports.getAllProviders = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = 'all' } = req.query;
 
-    // Fetch space owners from users collection (roles: sub_admin, owner, provider)
-    const ownerRoles = ['sub_admin', 'owner', 'provider'];
+    // Fetch space owners from users collection (roles: owner, provider only — sub_admin are Assistants)
+    const ownerRoles = ['owner', 'provider'];
     const snapshots = await Promise.all(
       ownerRoles.map(role => db.collection('users').where('role', '==', role).get())
     );
@@ -33,7 +33,7 @@ exports.getAllProviders = async (req, res) => {
     // Get workspace counts for each provider
     const providersWithStats = await Promise.all(
       providers.map(async (provider) => {
-        const workspacesSnapshot = await db.collection('workspaces')
+        const workspacesSnapshot = await db.collection(COLLECTIONS.SPACES)
           .where('adminId', '==', provider.id)
           .get();
         return { ...provider, workspaceCount: workspacesSnapshot.size };
@@ -72,7 +72,7 @@ exports.getProviderById = async (req, res) => {
     }
 
     // Get provider's workspaces
-    const workspacesSnapshot = await db.collection('workspaces')
+    const workspacesSnapshot = await db.collection(COLLECTIONS.SPACES)
       .where('ownerId', '==', id)
       .get();
 

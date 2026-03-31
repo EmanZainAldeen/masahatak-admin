@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db, COLLECTIONS } = require('../config/firebase');
 
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {
@@ -11,7 +11,7 @@ exports.getDashboardStats = async (req, res) => {
     ] = await Promise.all([
       db.collection('users').get(),
       db.collection('providers').get(),
-      db.collection('workspaces').get(),
+      db.collection(COLLECTIONS.SPACES).get(),
       db.collection('bookings').get()
     ]);
 
@@ -173,7 +173,7 @@ exports.getPopularWorkspaces = async (req, res) => {
     // Get workspace details
     const popularWorkspaces = await Promise.all(
       sortedWorkspaces.map(async ([workspaceId, bookingCount]) => {
-        const workspaceDoc = await db.collection('workspaces').doc(workspaceId).get();
+        const workspaceDoc = await db.collection(COLLECTIONS.SPACES).doc(workspaceId).get();
         return {
           id: workspaceId,
           spaceName: workspaceDoc.data()?.spaceName || 'Unknown',

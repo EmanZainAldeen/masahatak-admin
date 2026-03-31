@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db, COLLECTIONS } = require('../config/firebase');
 
 // Get all reviews
 exports.getAllReviews = async (req, res) => {
@@ -37,7 +37,7 @@ exports.getAllReviews = async (req, res) => {
       reviews.map(async (review) => {
         const [userDoc, workspaceDoc] = await Promise.all([
           db.collection('users').doc(review.userId).get(),
-          db.collection('workspaces').doc(review.workspaceId).get()
+          db.collection(COLLECTIONS.SPACES).doc(review.workspaceId).get()
         ]);
 
         return {
