@@ -281,3 +281,52 @@ exports.listOwnerBookings = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+// List assistants (sub_admins) linked to this owner's spaces
+exports.listOwnerAssistants = async (req, res) => {
+  try {
+    const { ownerId } = req.params;
+
+    // Get all spaces belonging to this owner
+    const spacesSnap = await db.collection('workspaces')
+      .where('providerId', '==', ownerId)
+      .get();
+
+    // Also check createdBy field for admin-created spaces
+    const spacesSnap2 = await db.collection('workspaces')
+      .where('adminId', '!=', null)
+      .get();
+
+    // Collect all adminIds from owner's spaces
+    const adminIds = new Set();
+    spacesSnap.docs.forEach(doc => {
+      const adminId = doc.data().adminId;
+      if (adminId) adminIds.add(adminId);
+    });
+
+    if (adminIds.size === 0) {
+      return res.json({ success: true, assistants: [] });
+    }
+
+    // Fetch sub_admin users with those IDs
+    const assistants = [];
+    for (const uid of adminIds) {
+      try {
+        const userDoc = await db.collection('users').doc(uid).get();
+        if (userDoc.exists && userDoc.data().role === 'sub_admin') {
+          assistants.push({
+            id: userDoc.id,
+            fullName: userDoc.data().fullName || userDoc.data().full_name || 'Unknown',
+            email: userDoc.data().email || '',
+            status: userDoc.data().status || 'active',
+          });
+        }
+      } catch (_) {}
+    }
+
+    res.json({ success: true, assistants });
+  } catch (error) {
+    console.error('List owner assistants error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};

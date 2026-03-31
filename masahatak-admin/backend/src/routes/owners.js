@@ -22,4 +22,7 @@ router.delete('/spaces/:spaceId/blocks/:blockId', ownersController.removeBlock);
 // Owner bookings routes
 router.get('/:ownerId/bookings', ownersController.listOwnerBookings);
 
+// Owner assistants (sub_admins linked to this owner's spaces)
+router.get('/:ownerId/assistants', ownersController.listOwnerAssistants);
+
 module.exports = router;
