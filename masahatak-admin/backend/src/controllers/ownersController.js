@@ -287,42 +287,46 @@ exports.listOwnerAssistants = async (req, res) => {
   try {
     const { ownerId } = req.params;
 
-    // Get all spaces belonging to this owner
-    const spacesSnap = await db.collection(COLLECTIONS.SPACES)
-      .where('providerId', '==', ownerId)
-      .get();
+    // Get spaces created by this owner (createdBy) or assigned to them (adminId)
+    const [byCreator, byAdminId] = await Promise.all([
+      db.collection(COLLECTIONS.SPACES).where('createdBy', '==', ownerId).get(),
+      db.collection(COLLECTIONS.SPACES).where('adminId', '==', ownerId).get(),
+    ]);
 
-    // Also check createdBy field for admin-created spaces
-    const spacesSnap2 = await db.collection(COLLECTIONS.SPACES)
-      .where('adminId', '!=', null)
-      .get();
-
-    // Collect all adminIds from owner's spaces
-    const adminIds = new Set();
-    spacesSnap.docs.forEach(doc => {
-      const adminId = doc.data().adminId;
-      if (adminId) adminIds.add(adminId);
+    // Collect all sub-admin IDs assigned to these spaces
+    const assistantIds = new Set();
+    [...byCreator.docs, ...byAdminId.docs].forEach(doc => {
+      const d = doc.data();
+      // sub-admin assigned to this space
+      if (d.adminId && d.adminId !== ownerId) assistantIds.add(d.adminId);
     });
 
-    if (adminIds.size === 0) {
+    // Also get sub_admins whose assignedSpaceIds contain spaces owned by this owner
+    const ownerSpaceIds = new Set([
+      ...byCreator.docs.map(d => d.id),
+      ...byAdminId.docs.map(d => d.id),
+    ]);
+
+    if (ownerSpaceIds.size === 0 && assistantIds.size === 0) {
       return res.json({ success: true, assistants: [] });
     }
 
-    // Fetch sub_admin users with those IDs
+    // Get all sub_admins and check if any of their assignedSpaceIds overlap
+    const subAdminSnap = await db.collection('users').where('role', '==', 'sub_admin').get();
     const assistants = [];
-    for (const uid of adminIds) {
-      try {
-        const userDoc = await db.collection('users').doc(uid).get();
-        if (userDoc.exists && userDoc.data().role === 'sub_admin') {
-          assistants.push({
-            id: userDoc.id,
-            fullName: userDoc.data().fullName || userDoc.data().full_name || 'Unknown',
-            email: userDoc.data().email || '',
-            status: userDoc.data().status || 'active',
-          });
-        }
-      } catch (_) {}
-    }
+    subAdminSnap.docs.forEach(doc => {
+      const data = doc.data();
+      const assigned = data.assignedSpaceIds || [];
+      const linked = assigned.some(id => ownerSpaceIds.has(id)) || assistantIds.has(doc.id);
+      if (linked) {
+        assistants.push({
+          id: doc.id,
+          fullName: data.fullName || data.full_name || 'Unknown',
+          email: data.email || '',
+          status: data.status || 'active',
+        });
+      }
+    });
 
     res.json({ success: true, assistants });
   } catch (error) {

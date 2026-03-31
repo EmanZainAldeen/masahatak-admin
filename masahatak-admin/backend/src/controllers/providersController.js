@@ -5,8 +5,8 @@ exports.getAllProviders = async (req, res) => {
   try {
     const { page = 1, limit = 10, status = 'all' } = req.query;
 
-    // Fetch space owners from users collection (roles: owner, provider only — sub_admin are Assistants)
-    const ownerRoles = ['owner', 'provider'];
+    // Fetch space owners from users collection (roles: admin, owner, provider — sub_admin are Assistants)
+    const ownerRoles = ['admin', 'owner', 'provider'];
     const snapshots = await Promise.all(
       ownerRoles.map(role => db.collection('users').where('role', '==', role).get())
     );
