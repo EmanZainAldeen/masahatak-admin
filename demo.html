@@ -19,6 +19,7 @@
         .ui-header { position: fixed; top: 30px; left: 50px; right: 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
         .countdown { font-size: 1.8rem; font-weight: 900; color: var(--warning); background: rgba(0,0,0,0.3); padding: 10px 25px; border-radius: 15px; border: 1px solid var(--accent); font-family: monospace; }
         .lang-btn { background: var(--accent); color: #000; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; transition: 0.3s; }
+        .lang-btn:hover { background: #0ea5e9; transform: scale(1.05); }
 
         /* مسرح العرض */
         .stage { display: grid; grid-template-columns: 1.2fr 2.5fr 1.2fr; height: 100vh; width: 100vw; align-items: center; padding: 0 50px; perspective: 2500px; }
@@ -48,8 +49,10 @@
         .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--warning)); }
 
         /* شاشة البداية */
-        .intro { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; }
-        #start-btn { padding: 25px 80px; font-size: 1.8rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 30px rgba(56,189,248,0.4); }
+        .intro { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; opacity: 1; }
+        .intro.hidden { opacity: 0; pointer-events: none; }
+        #start-btn { padding: 25px 80px; font-size: 1.8rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 30px rgba(56,189,248,0.4); transition: 0.3s; }
+        #start-btn:hover { background: #0ea5e9; transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -83,7 +86,6 @@
     <script>
         const baseUrl = "https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/";
         
-        // توزيع 120 ثانية على 14 مشهداً (كل مشهد حوالي 8-9 ثواني)
         const content = {
             ar: [
                 { t: "مساحتك: الرؤية", d: "مشروع ريادي انطلق من قلب المعاناة في غزة، ليوفر للمبدعين بيئة عمل ذكية تواكب تطلعاتهم العالمية.", c: "01splash.png", pos: "right", dur: 9000 },
@@ -100,46 +102,137 @@
                 { t: "أكثر من مجرد تطبيق", d: "نحن نبني مجتمعاً، ونوفر فرصاً، ونعزز صمود المبدعين التقنيين في أصعب الظروف.", c: "01splash.png", pos: "left", dur: 8000 },
                 { t: "مساحتك.. مساحتك للإبداع", d: "انضم إلينا الآن وكن جزءاً من مستقبل العمل التقني في فلسطين.", c: "01splash.png", pos: "right", dur: 6000 },
                 { t: "شكراً لمتابعتكم", d: "فريق مساحتك يتمنى لكم رحلة عمل مثمرة.", c: "logo.png", pos: "left", dur: 5000 }
+            ],
+            en: [
+                { t: "Masahatak: The Vision", d: "An entrepreneurial project launched from the heart of Gaza's challenges, offering creators a smart work environment that meets global aspirations.", c: "01splash.png", pos: "right", dur: 9000 },
+                { t: "A Reality Full of Challenges", d: "Over 35% of freelancers suffer from power outages and weak internet, threatening their work stability and professional future.", c: "01splash.png", l: "04welcome1.png", r: "05welcome2.png", pos: "left", dur: 10000 },
+                { t: "The Smart Solution", d: "Masahatak provides a technical bridge connecting users to workspaces equipped with the latest facilities, ensuring uninterrupted creativity.", c: "03login.png", pos: "right", dur: 8000 },
+                { t: "Easy Access", d: "With modern and simple interfaces, you can create your account and start exploring opportunities around you in mere seconds.", c: "02signup.png", l: "03login.png", pos: "left", dur: 9000 },
+                { t: "Explore Spaces", d: "An interactive map system allows you to search for the nearest workspace, with precise information about electricity availability and internet speed.", c: "07home.png", l: "10search_results.png", r: "11nearly.png", pos: "right", dur: 10000 },
+                { t: "Your Digital AI Assistant", d: "The AI system analyzes your previous preferences to suggest the most suitable place for your current tasks.", c: "09ai_concierge.png", pos: "left", dur: 9000 },
+                { t: "Details That Build Trust", d: "View real photos of every corner and read reviews from colleagues who came before you, ensuring the best choice.", c: "12space_details_tap1.png", l: "13space_details_tap2.png", r: "14space_details_tap3.png", pos: "right", dur: 10000 },
+                { t: "Fast and Flexible Booking", d: "Choose the time that suits you, whether for specific hours or full days, with instant confirmation securing your reservation.", c: "17request_booking.png", l: "18pending_booking_approval.png", pos: "left", dur: 9000 },
+                { t: "Local Payment System", d: "Full support for e-wallets and local financial solutions, making payments secure and easy.", c: "24payment.png", l: "23booking_status-go-payment.png", r: "27payment_done.png", pos: "right", dur: 10000 },
+                { t: "Comprehensive Account Management", d: "Control your profile, track your booking history, and adjust your notifications to stay connected with your workspace.", c: "28profile.png", l: "30settings.png", r: "31notification_settings.png", pos: "left", dur: 9000 },
+                { t: "Powerful Technical Architecture", d: "Built with cutting-edge technologies: Flutter and Firebase, ensuring lightning-fast performance and real-time data sync.", c: "30settings.png", pos: "right", dur: 8000 },
+                { t: "More Than Just an App", d: "We're building a community, creating opportunities, and strengthening the resilience of tech creators in challenging times.", c: "01splash.png", pos: "left", dur: 8000 },
+                { t: "Masahatak.. Your Space for Creativity", d: "Join us now and be part of the future of tech work in Palestine.", c: "01splash.png", pos: "right", dur: 6000 },
+                { t: "Thank You for Watching", d: "The Masahatak team wishes you a productive work journey.", c: "logo.png", pos: "left", dur: 5000 }
             ]
         };
 
-        let lang = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'ar';
+        let lang = 'ar';
         let idx = 0;
-        let totalTime = content[lang].reduce((a,b)=>a+b.dur, 0);
-        let remain = totalTime/1000;
+        let isPlaying = false;
+        let currentTimer = null;
+        let currentTimeout = null;
+
+        function getTotalTime() {
+            return content[lang].reduce((a, b) => a + b.dur, 0);
+        }
 
         function startTimer() {
-            const t = setInterval(() => {
-                if(remain <= 0) { clearInterval(t); finish(); return; }
+            let totalTime = getTotalTime();
+            let remain = totalTime / 1000;
+
+            currentTimer = setInterval(() => {
+                if (remain <= 0) {
+                    clearInterval(currentTimer);
+                    finish();
+                    return;
+                }
                 remain--;
-                const m = Math.floor(remain/60).toString().padStart(2,'0');
-                const s = (remain%60).toString().padStart(2,'0');
+                const m = Math.floor(remain / 60).toString().padStart(2, '0');
+                const s = (remain % 60).toString().padStart(2, '0');
                 document.getElementById('timer').innerText = `${m}:${s}`;
-                document.getElementById('progress').style.width = `${((totalTime/1000 - remain) / (totalTime/1000)) * 100}%`;
+                document.getElementById('progress').style.width = `${((totalTime / 1000 - remain) / (totalTime / 1000)) * 100}%`;
             }, 1000);
         }
 
         function run() {
             const scenes = content[lang];
-            if(idx >= scenes.length) return;
+            if (idx >= scenes.length) return;
             const s = scenes[idx];
 
             // تحريك النصوص
             const pl = document.getElementById('panel-left');
             const pr = document.getElementById('panel-right');
-            pl.classList.remove('active'); pr.classList.remove('active');
+            pl.classList.remove('active');
+            pr.classList.remove('active');
             const active = s.pos === 'left' ? pl : pr;
             active.innerHTML = `<h2>${s.t}</h2><p>${s.d}</p>`;
-            setTimeout(()=>active.classList.add('active'), 500);
+            setTimeout(() => active.classList.add('active'), 500);
 
             // تحديث الشاشات
             document.getElementById('phone-c').innerHTML = `<img src="${baseUrl}${s.c}" class="active">`;
             const phl = document.getElementById('phone-l');
             const phr = document.getElementById('phone-r');
-            
+
             phl.innerHTML = s.l ? `<img src="${baseUrl}${s.l}" class="active">` : '';
             phr.innerHTML = s.r ? `<img src="${baseUrl}${s.r}" class="active">` : '';
             phl.className = s.l ? "phone side-phone left-p active" : "phone side-phone left-p";
+            phr.className = s.r ? "phone side-phone right-p active" : "phone side-phone right-p";
+
+            currentTimeout = setTimeout(() => {
+                idx++;
+                run();
+            }, s.dur);
+        }
+
+        function finish() {
+            document.getElementById('music').pause();
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        function switchLanguage() {
+            // Stop current playback
+            if (currentTimer) clearInterval(currentTimer);
+            if (currentTimeout) clearTimeout(currentTimeout);
+            document.getElementById('music').pause();
+
+            // Switch language
+            lang = lang === 'ar' ? 'en' : 'ar';
+            idx = 0;
+
+            // Update button and HTML
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.documentElement.lang = lang;
+            document.getElementById('lang-btn').textContent = lang === 'ar' ? 'English' : 'العربية';
+
+            // Show intro again
+            const intro = document.getElementById('intro');
+            intro.classList.remove('hidden');
+            intro.style.opacity = '1';
+        }
+
+        // نجوم الخلفية
+        for (let i = 0; i < 120; i++) {
+            let s = document.createElement('div');
+            s.className = 'star';
+            s.style.width = s.style.height = Math.random() * 3 + 'px';
+            s.style.top = Math.random() * 100 + '%';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
+            document.getElementById('universe').appendChild(s);
+        }
+
+        // زر البدء
+        document.getElementById('start-btn').addEventListener('click', function() {
+            const intro = document.getElementById('intro');
+            intro.classList.add('hidden');
+            const m = document.getElementById('music');
+            m.volume = 0.3;
+            m.play().catch(e => console.log("Audio play failed, visual will start"));
+            isPlaying = true;
+            startTimer();
+            run();
+        });
+
+        // زر تغيير اللغة
+        document.getElementById('lang-btn').addEventListener('click', switchLanguage);
+    </script>
+</body>
+</html>assName = s.l ? "phone side-phone left-p active" : "phone side-phone left-p";
             phr.className = s.r ? "phone side-phone right-p active" : "phone side-phone right-p";
 
             setTimeout(()=> { idx++; run(); }, s.dur);
