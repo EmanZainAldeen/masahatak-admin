@@ -1,12 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo</title>
+    <title>تطبيق مساحتك</title>
+    <style>
+        body {
+            background: url('universe-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #countdown {
+            font-size: 48px;
+        }
+        .phone-display {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 50px;
+        }
+        .phone {
+            border: 1px solid #fff;
+            padding: 10px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello, World!</h1>
-    <p>This is a demo HTML file.</p>
+    <h1>مرحبًا بكم في تطبيق مساحتك</h1>
+    <div id="countdown"></div>
+    <div class="phone-display">
+        <div class="phone">هاتف 1</div>
+        <div class="phone">هاتف 2</div>
+        <div class="phone">هاتف 3</div>
+    </div>
+    <script>
+        // Countdown Timer Logic
+        var countdownDate = new Date("2026-12-31T23:59:59Z").getTime();
+        var x = setInterval(function() {
+            var now = new Date().getTime();
+            var distance = countdownDate - now;
+            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            document.getElementById("countdown").innerHTML = days + " يوم " + hours + " ساعة " + minutes + " دقيقة " + seconds + " ثانية ";
+            if (distance < 0) {
+                clearInterval(x);
+                document.getElementById("countdown").innerHTML = "انتهت المدة";
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
