@@ -18,8 +18,6 @@
         /* واجهة العدادات */
         .ui-header { position: fixed; top: 30px; left: 50px; right: 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
         .countdown { font-size: 1.8rem; font-weight: 900; color: var(--warning); background: rgba(0,0,0,0.3); padding: 10px 25px; border-radius: 15px; border: 1px solid var(--accent); font-family: monospace; }
-        .lang-btn { background: var(--accent); color: #000; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; transition: 0.3s; }
-        .lang-btn:hover { background: #0ea5e9; transform: scale(1.05); }
 
         /* مسرح العرض */
         .stage { display: grid; grid-template-columns: 1.2fr 2.5fr 1.2fr; height: 100vh; width: 100vw; align-items: center; padding: 0 50px; perspective: 2500px; }
@@ -48,38 +46,62 @@
         .progress-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); }
         .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--warning)); }
 
+        /* شاشة اختيار اللغة */
+        .language-selector { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; transition: 1s; opacity: 1; }
+        .language-selector.hidden { opacity: 0; pointer-events: none; }
+        .language-selector img { width: 200px; margin-bottom: 100px; }
+        .buttons-container { display: flex; gap: 40px; }
+        .lang-choice-btn { padding: 30px 70px; font-size: 1.8rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 30px rgba(56,189,248,0.4); transition: 0.3s; }
+        .lang-choice-btn:hover { background: #0ea5e9; transform: scale(1.05); }
+
         /* شاشة البداية */
-        .intro { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; opacity: 1; }
-        .intro.hidden { opacity: 0; pointer-events: none; }
+        .intro { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; opacity: 0; pointer-events: none; }
+        .intro.active { opacity: 1; pointer-events: auto; }
         #start-btn { padding: 25px 80px; font-size: 1.8rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 30px rgba(56,189,248,0.4); transition: 0.3s; }
         #start-btn:hover { background: #0ea5e9; transform: scale(1.05); }
+
+        /* شاشة العرض الرئيسية */
+        .main-content { position: fixed; inset: 0; opacity: 0; pointer-events: none; transition: 1s; }
+        .main-content.active { opacity: 1; pointer-events: auto; }
     </style>
 </head>
 <body>
 
-    <div class="intro" id="intro">
-        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png" style="width:200px; margin-bottom:50px;">
-        <button id="start-btn">ابدأ العرض </button>
-    </div>
-
     <div class="universe" id="universe"></div>
 
-    <div class="ui-header">
-        <div class="countdown" id="timer">02:00</div>
-        <button class="lang-btn" id="lang-btn">English</button>
-    </div>
-
-    <div class="stage">
-        <div class="text-panel" id="panel-left"></div>
-        <div class="phones-container">
-            <div class="phone side-phone left-p" id="phone-l"></div>
-            <div class="phone side-phone right-p" id="phone-r"></div>
-            <div class="phone" id="phone-c"></div>
+    <!-- شاشة اختيار اللغة -->
+    <div class="language-selector" id="languageSelector">
+        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png" style="width:200px; margin-bottom:100px;">
+        <div class="buttons-container">
+            <button class="lang-choice-btn" id="arBtn">عرض مساحتك</button>
+            <button class="lang-choice-btn" id="enBtn">Show Masahatak</button>
         </div>
-        <div class="text-panel" id="panel-right"></div>
     </div>
 
-    <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
+    <!-- شاشة البداية -->
+    <div class="intro" id="intro">
+        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png" style="width:200px; margin-bottom:50px;">
+        <button id="start-btn"></button>
+    </div>
+
+    <!-- محتوى العرض الرئيسي -->
+    <div class="main-content" id="mainContent">
+        <div class="ui-header">
+            <div class="countdown" id="timer">02:00</div>
+        </div>
+
+        <div class="stage">
+            <div class="text-panel" id="panel-left"></div>
+            <div class="phones-container">
+                <div class="phone side-phone left-p" id="phone-l"></div>
+                <div class="phone side-phone right-p" id="phone-r"></div>
+                <div class="phone" id="phone-c"></div>
+            </div>
+            <div class="text-panel" id="panel-right"></div>
+        </div>
+
+        <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
+    </div>
 
     <audio id="music" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"></audio>
 
@@ -121,11 +143,23 @@
             ]
         };
 
-        let lang = 'ar';
+        let lang = '';
         let idx = 0;
-        let isPlaying = false;
         let currentTimer = null;
         let currentTimeout = null;
+
+        // نجوم الخلفية
+        function createStars() {
+            for (let i = 0; i < 120; i++) {
+                let s = document.createElement('div');
+                s.className = 'star';
+                s.style.width = s.style.height = Math.random() * 3 + 'px';
+                s.style.top = Math.random() * 100 + '%';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
+                document.getElementById('universe').appendChild(s);
+            }
+        }
 
         function getTotalTime() {
             return content[lang].reduce((a, b) => a + b.dur, 0);
@@ -181,91 +215,50 @@
 
         function finish() {
             document.getElementById('music').pause();
-            setTimeout(() => location.reload(), 1000);
+            setTimeout(() => {
+                // Reset to language selector
+                document.getElementById('languageSelector').classList.remove('hidden');
+                document.getElementById('intro').classList.remove('active');
+                document.getElementById('mainContent').classList.remove('active');
+                lang = '';
+                idx = 0;
+            }, 1000);
         }
 
-        function switchLanguage() {
-            // Stop current playback
-            if (currentTimer) clearInterval(currentTimer);
-            if (currentTimeout) clearTimeout(currentTimeout);
-            document.getElementById('music').pause();
-
-            // Switch language
-            lang = lang === 'ar' ? 'en' : 'ar';
-            idx = 0;
-
-            // Update button and HTML
-            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-            document.documentElement.lang = lang;
-            document.getElementById('lang-btn').textContent = lang === 'ar' ? 'English' : 'العربية';
-
-            // Show intro again
-            const intro = document.getElementById('intro');
-            intro.classList.remove('hidden');
-            intro.style.opacity = '1';
-        }
-
-        // نجوم الخلفية
-        for (let i = 0; i < 120; i++) {
-            let s = document.createElement('div');
-            s.className = 'star';
-            s.style.width = s.style.height = Math.random() * 3 + 'px';
-            s.style.top = Math.random() * 100 + '%';
-            s.style.left = Math.random() * 100 + '%';
-            s.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
-            document.getElementById('universe').appendChild(s);
-        }
-
-        // زر البدء
-        document.getElementById('start-btn').addEventListener('click', function() {
-            const intro = document.getElementById('intro');
-            intro.classList.add('hidden');
+        function startPresentation() {
+            document.getElementById('intro').classList.add('active');
+            document.getElementById('mainContent').classList.add('active');
             const m = document.getElementById('music');
             m.volume = 0.3;
-            m.play().catch(e => console.log("Audio play failed, visual will start"));
-            isPlaying = true;
+            m.play().catch(e => console.log("Audio play failed"));
             startTimer();
             run();
+        }
+
+        // زر ابدأ العرض
+        document.getElementById('start-btn').addEventListener('click', startPresentation);
+
+        // أزرار اختيار اللغة
+        document.getElementById('arBtn').addEventListener('click', function() {
+            lang = 'ar';
+            document.documentElement.dir = 'rtl';
+            document.documentElement.lang = 'ar';
+            document.getElementById('languageSelector').classList.add('hidden');
+            document.getElementById('start-btn').textContent = 'ابدأ العرض';
+            setTimeout(() => document.getElementById('intro').classList.add('active'), 500);
         });
 
-        // زر تغيير اللغة
-        document.getElementById('lang-btn').addEventListener('click', switchLanguage);
-    </script>
-</body>
-</html>assName = s.l ? "phone side-phone left-p active" : "phone side-phone left-p";
-            phr.className = s.r ? "phone side-phone right-p active" : "phone side-phone right-p";
+        document.getElementById('enBtn').addEventListener('click', function() {
+            lang = 'en';
+            document.documentElement.dir = 'ltr';
+            document.documentElement.lang = 'en';
+            document.getElementById('languageSelector').classList.add('hidden');
+            document.getElementById('start-btn').textContent = 'Start Presentation';
+            setTimeout(() => document.getElementById('intro').classList.add('active'), 500);
+        });
 
-            setTimeout(()=> { idx++; run(); }, s.dur);
-        }
-
-        function finish() {
-            document.getElementById('music').pause();
-            setTimeout(()=>location.reload(), 1000);
-        }
-        // نجوم الخلفية
-        for(let i=0; i<120; i++){
-            let s = document.createElement('div'); s.className='star';
-            s.style.width = s.style.height = Math.random()*3+'px';
-            s.style.top = Math.random()*100+'%'; s.style.left = Math.random()*100+'%';
-            s.style.setProperty('--d', (Math.random()*4+2)+'s');
-            document.getElementById('universe').appendChild(s);
-        }
-
-        document.getElementById('start-btn').onclick = () => {
-            document.getElementById('intro').style.opacity = '0';
-            setTimeout(()=>document.getElementById('intro').remove(), 1000);
-            const m = document.getElementById('music'); m.volume=0.3; m.play();
-            startTimer(); run();
-
-document.getElementById('start-btn').addEventListener('click', function() {
-    console.log("Button Clicked!"); // للتأكد في القنصل أن الزر يعمل
-    document.getElementById('intro').style.display = 'none';
-    const m = document.getElementById('music'); 
-    m.play().catch(e => console.log("Audio play failed, but visual will start"));
-    startTimer(); 
-    run();
-});
-        }
+        // Initialize
+        createStars();
     </script>
 </body>
 </html>
