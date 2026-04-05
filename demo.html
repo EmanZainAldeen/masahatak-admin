@@ -1,56 +1,179 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق مساحتك</title>
+    <title>مساحتك - العرض النهائي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body {
-            background: url('universe-background.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        #countdown {
-            font-size: 48px;
-        }
-        .phone-display {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 50px;
-        }
-        .phone {
-            border: 1px solid #fff;
-            padding: 10px;
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.1);
-        }
+        :root { --accent: #38bdf8; --warning: #fbbf24; --bg: #020617; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: white; overflow: hidden; height: 100vh; font-family: 'Tajawal', sans-serif; }
+
+        /* خلفية النجوم المتلألئة */
+        .universe { position: fixed; inset: 0; background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); z-index: -1; }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.3); } }
+
+        /* واجهة العدادات */
+        .ui-header { position: fixed; top: 30px; left: 50px; right: 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .countdown { font-size: 1.8rem; font-weight: 900; color: var(--warning); background: rgba(0,0,0,0.3); padding: 10px 25px; border-radius: 15px; border: 1px solid var(--accent); font-family: monospace; }
+        .lang-btn { background: var(--accent); color: #000; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; transition: 0.3s; }
+
+        /* مسرح العرض */
+        .stage { display: grid; grid-template-columns: 1.2fr 2.5fr 1.2fr; height: 100vh; width: 100vw; align-items: center; padding: 0 50px; perspective: 2500px; }
+
+        /* الشاشات المتحركة */
+        .phones-container { display: flex; justify-content: center; align-items: center; transform-style: preserve-3d; animation: float3D 10s ease-in-out infinite; }
+        @keyframes float3D { 0%, 100% { transform: translateY(0) rotateY(-5deg); } 50% { transform: translateY(-20px) rotateY(5deg); } }
+
+        .phone { position: relative; width: 230px; height: 480px; background: #000; border-radius: 40px; border: 7px solid #1e293b; box-shadow: 0 25px 60px rgba(0,0,0,0.9); transition: 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); overflow: hidden; }
+        .phone img { width: 100%; height: 100%; object-fit: cover; position: absolute; opacity: 0; transition: 1s; }
+        .phone img.active { opacity: 1; }
+
+        /* إبعاد الشاشات الجانبية */
+        .side-phone { position: absolute; opacity: 0; transform: scale(0.85); }
+        .side-phone.active { opacity: 0.5; }
+        .left-p { transform: translateX(-280px) translateZ(-200px) rotateY(30deg); }
+        .right-p { transform: translateX(280px) translateZ(-200px) rotateY(-30deg); }
+
+        /* النصوص الجانبية */
+        .text-panel { opacity: 0; transform: translateY(40px); transition: 1.2s; padding: 20px; }
+        .text-panel.active { opacity: 1; transform: translateY(0); }
+        .text-panel h2 { font-size: 2.8rem; color: var(--accent); margin-bottom: 20px; font-weight: 900; }
+        .text-panel p { font-size: 1.4rem; line-height: 1.8; color: #f1f5f9; text-shadow: 0 4px 8px rgba(0,0,0,0.9); }
+
+        /* شريط التقدم السفلي */
+        .progress-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--warning)); }
+
+        /* شاشة البداية */
+        .intro { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; }
+        #start-btn { padding: 25px 80px; font-size: 1.8rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 30px rgba(56,189,248,0.4); }
     </style>
 </head>
 <body>
-    <h1>مرحبًا بكم في تطبيق مساحتك</h1>
-    <div id="countdown"></div>
-    <div class="phone-display">
-        <div class="phone">هاتف 1</div>
-        <div class="phone">هاتف 2</div>
-        <div class="phone">هاتف 3</div>
+
+    <div class="intro" id="intro">
+        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png" style="width:200px; margin-bottom:50px;">
+        <button id="start-btn">ابدأ العرض </button>
     </div>
+
+    <div class="universe" id="universe"></div>
+
+    <div class="ui-header">
+        <div class="countdown" id="timer">02:00</div>
+        <button class="lang-btn" id="lang-btn">English</button>
+    </div>
+
+    <div class="stage">
+        <div class="text-panel" id="panel-left"></div>
+        <div class="phones-container">
+            <div class="phone side-phone left-p" id="phone-l"></div>
+            <div class="phone side-phone right-p" id="phone-r"></div>
+            <div class="phone" id="phone-c"></div>
+        </div>
+        <div class="text-panel" id="panel-right"></div>
+    </div>
+
+    <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
+
+    <audio id="music" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"></audio>
+
     <script>
-        // Countdown Timer Logic
-        var countdownDate = new Date("2026-12-31T23:59:59Z").getTime();
-        var x = setInterval(function() {
-            var now = new Date().getTime();
-            var distance = countdownDate - now;
-            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            document.getElementById("countdown").innerHTML = days + " يوم " + hours + " ساعة " + minutes + " دقيقة " + seconds + " ثانية ";
-            if (distance < 0) {
-                clearInterval(x);
-                document.getElementById("countdown").innerHTML = "انتهت المدة";
-            }
-        }, 1000);
+        const baseUrl = "https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/";
+        
+        // توزيع 120 ثانية على 14 مشهداً (كل مشهد حوالي 8-9 ثواني)
+        const content = {
+            ar: [
+                { t: "مساحتك: الرؤية", d: "مشروع ريادي انطلق من قلب المعاناة في غزة، ليوفر للمبدعين بيئة عمل ذكية تواكب تطلعاتهم العالمية.", c: "01splash.png", pos: "right", dur: 9000 },
+                { t: "واقع مليء بالتحديات", d: "يعاني أكثر من 35% من المستقلين من انقطاع الكهرباء وضعف الإنترنت، مما يهدد استقرار أعمالهم ومستقبلهم المهني.", c: "01splash.png", l: "04welcome1.png", r: "05welcome2.png", pos: "left", dur: 10000 },
+                { t: "الحل الذكي", d: "مساحتك تقدم جسراً تقنياً يربط المستخدم بمساحات عمل مجهزة بأحدث الوسائل، لضمان استمرارية الإبداع دون انقطاع.", c: "03login.png", pos: "right", dur: 8000 },
+                { t: "سهولة الوصول", d: "بواجهات عصرية وبسيطة، يمكنك إنشاء حسابك والبدء في استكشاف الفرص المتاحة حولك في ثوانٍ معدودة.", c: "02signup.png", l: "03login.png", pos: "left", dur: 9000 },
+                { t: "استكشاف المساحات", d: "نظام خرائط تفاعلي يتيح لك البحث عن أقرب مساحة عمل، مع عرض دقيق لمدى توفر الكهرباء وسرعة الإنترنت.", c: "07home.png", l: "10search_results.png", r: "11nearly.png", pos: "right", dur: 10000 },
+                { t: "مساعدك الرقمي الـ AI", d: "يقوم نظام الذكاء الاصطناعي بتحليل تفضيلاتك السابقة ليقترح عليك المكان الأنسب لمهامك الحالية.", c: "09ai_concierge.png", pos: "left", dur: 9000 },
+                { t: "تفاصيل تمنحك الثقة", d: "شاهد صوراً حقيقية لكل زاوية، واطلع على تقييمات الزملاء الذين سبقوك لتجربة المكان، لضمان اختيارك الأفضل.", c: "12space_details_tap1.png", l: "13space_details_tap2.png", r: "14space_details_tap3.png", pos: "right", dur: 10000 },
+                { t: "حجز فوري ومرن", d: "اختر الوقت الذي يناسبك، سواء لساعات محددة أو لأيام كاملة، مع تأكيد فوري يضمن لك مكانك المحجوز.", c: "17request_booking.png", l: "18pending_booking_approval.png", pos: "left", dur: 9000 },
+                { t: "نظام دفع محلي", d: "دعم كامل للمحافظ الإلكترونية والحلول المالية المتاحة محلياً، لتسهيل عملية الدفع بأمان وسهولة تامة.", c: "24payment.png", l: "23booking_status-go-payment.png", r: "27payment_done.png", pos: "right", dur: 10000 },
+                { t: "إدارة الحساب الشاملة", d: "تحكم بملفك الشخصي، تتبع تاريخ حجوزاتك، وقم بضبط إشعاراتك لتبقى دائماً على اتصال ببيئة عملك.", c: "28profile.png", l: "30settings.png", r: "31notification_settings.png", pos: "left", dur: 9000 },
+                { t: "بنية تقنية قوية", d: "مشروع مطور بأحدث التقنيات البرمجية Flutter و Firebase لضمان سرعة فائقة وتزامن بيانات لحظي.", c: "30settings.png", pos: "right", dur: 8000 },
+                { t: "أكثر من مجرد تطبيق", d: "نحن نبني مجتمعاً، ونوفر فرصاً، ونعزز صمود المبدعين التقنيين في أصعب الظروف.", c: "01splash.png", pos: "left", dur: 8000 },
+                { t: "مساحتك.. مساحتك للإبداع", d: "انضم إلينا الآن وكن جزءاً من مستقبل العمل التقني في فلسطين.", c: "01splash.png", pos: "right", dur: 6000 },
+                { t: "شكراً لمتابعتكم", d: "فريق مساحتك يتمنى لكم رحلة عمل مثمرة.", c: "logo.png", pos: "left", dur: 5000 }
+            ]
+        };
+
+        let lang = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'ar';
+        let idx = 0;
+        let totalTime = content[lang].reduce((a,b)=>a+b.dur, 0);
+        let remain = totalTime/1000;
+
+        function startTimer() {
+            const t = setInterval(() => {
+                if(remain <= 0) { clearInterval(t); finish(); return; }
+                remain--;
+                const m = Math.floor(remain/60).toString().padStart(2,'0');
+                const s = (remain%60).toString().padStart(2,'0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+                document.getElementById('progress').style.width = `${((totalTime/1000 - remain) / (totalTime/1000)) * 100}%`;
+            }, 1000);
+        }
+
+        function run() {
+            const scenes = content[lang];
+            if(idx >= scenes.length) return;
+            const s = scenes[idx];
+
+            // تحريك النصوص
+            const pl = document.getElementById('panel-left');
+            const pr = document.getElementById('panel-right');
+            pl.classList.remove('active'); pr.classList.remove('active');
+            const active = s.pos === 'left' ? pl : pr;
+            active.innerHTML = `<h2>${s.t}</h2><p>${s.d}</p>`;
+            setTimeout(()=>active.classList.add('active'), 500);
+
+            // تحديث الشاشات
+            document.getElementById('phone-c').innerHTML = `<img src="${baseUrl}${s.c}" class="active">`;
+            const phl = document.getElementById('phone-l');
+            const phr = document.getElementById('phone-r');
+            
+            phl.innerHTML = s.l ? `<img src="${baseUrl}${s.l}" class="active">` : '';
+            phr.innerHTML = s.r ? `<img src="${baseUrl}${s.r}" class="active">` : '';
+            phl.className = s.l ? "phone side-phone left-p active" : "phone side-phone left-p";
+            phr.className = s.r ? "phone side-phone right-p active" : "phone side-phone right-p";
+
+            setTimeout(()=> { idx++; run(); }, s.dur);
+        }
+
+        function finish() {
+            document.getElementById('music').pause();
+            setTimeout(()=>location.reload(), 1000);
+        }
+
+        // نجوم الخلفية
+        for(let i=0; i<120; i++){
+            let s = document.createElement('div'); s.className='star';
+            s.style.width = s.style.height = Math.random()*3+'px';
+            s.style.top = Math.random()*100+'%'; s.style.left = Math.random()*100+'%';
+            s.style.setProperty('--d', (Math.random()*4+2)+'s');
+            document.getElementById('universe').appendChild(s);
+        }
+
+        document.getElementById('start-btn').onclick = () => {
+            document.getElementById('intro').style.opacity = '0';
+            setTimeout(()=>document.getElementById('intro').remove(), 1000);
+            const m = document.getElementById('music'); m.volume=0.3; m.play();
+            startTimer(); run();
+
+document.getElementById('start-btn').addEventListener('click', function() {
+    console.log("Button Clicked!"); // للتأكد في القنصل أن الزر يعمل
+    document.getElementById('intro').style.display = 'none';
+    const m = document.getElementById('music'); 
+    m.play().catch(e => console.log("Audio play failed, but visual will start"));
+    startTimer(); 
+    run();
+});
+        }
     </script>
 </body>
 </html>
