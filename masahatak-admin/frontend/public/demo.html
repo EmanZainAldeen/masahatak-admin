@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مساحتك - العرض النهائي الاحترافي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #38bdf8;
+            --warning: #ff9800;
+            --bg-dark: #020617;
+            --glass-dark: rgba(0, 0, 0, 0.85);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body { background: var(--bg-dark); color: white; overflow: hidden; height: 100vh; }
+
+        /* --- الخلفية السينمائية --- */
+        .universe {
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            z-index: -1;
+        }
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; transform: scale(1.2); } }
+
+        /* --- مؤشرات الوقت (مثل ستوري الانستقرام) --- */
+        .story-indicators {
+            position: fixed; top: 15px; left: 5%; width: 90%;
+            display: flex; gap: 5px; z-index: 1000;
+        }
+        .indicator { height: 3px; background: rgba(255,255,255,0.2); flex: 1; border-radius: 2px; overflow: hidden; }
+        .indicator-fill { height: 100%; width: 0%; background: var(--accent); transition: width linear; }
+        .indicator-fill.active { width: 100%; }
+        .indicator-fill.done { width: 100%; background: rgba(255,255,255,0.5); }
+
+        /* --- المسرح الرئيسي --- */
+        .stage {
+            display: grid; grid-template-columns: 1fr 1.5fr 1fr;
+            height: 100vh; padding: 40px; align-items: center; perspective: 2000px;
+        }
+
+        /* --- عرض الشاشات (الهواتف) --- */
+        .phone-group {
+            grid-column: 2; position: relative;
+            display: flex; justify-content: center; align-items: center;
+            transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .phone-main {
+            width: 250px; height: 520px; background: #000; border-radius: 40px;
+            border: 8px solid #222; box-shadow: 0 0 50px rgba(56, 189, 248, 0.2);
+            position: relative; z-index: 10;
+        }
+        .phone-side {
+            position: absolute; width: 220px; height: 460px; border-radius: 35px;
+            opacity: 0.5; transition: 1s ease; border: 4px solid #333; overflow: hidden;
+        }
+        .side-left { transform: translateX(-180px) translateZ(-100px) rotateY(20deg); }
+        .side-right { transform: translateX(180px) translateZ(-100px) rotateY(-20deg); }
+
+        .screen img { width: 100%; height: 100%; object-fit: cover; position: absolute; opacity: 0; transition: 0.8s; }
+        .screen img.active { opacity: 1; }
+
+        /* --- النصوص (تباين عالٍ جداً) --- */
+        .text-overlay {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 700px; text-align: center;
+            background: var(--glass-dark); padding: 35px; border-radius: 30px;
+            backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
+            z-index: 200; opacity: 0; visibility: hidden;
+            transition: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .text-overlay.active { opacity: 1; visibility: visible; transform: translate(-50%, -10px); }
+        .text-overlay h2 { font-size: 2.2rem; color: var(--accent); margin-bottom: 15px; font-weight: 900; }
+        .text-overlay p { font-size: 1.25rem; line-height: 1.6; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
+        /* --- شريط الحالة السفلي --- */
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 6px;
+            background: rgba(255,255,255,0.1); z-index: 1000;
+        }
+        .total-progress { height: 100%; width: 0%; background: var(--warning); transition: 0.5s; }
+
+        /* --- شاشة البداية --- */
+        .start-screen {
+            position: fixed; inset: 0; background: var(--bg-dark);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000;
+        }
+        #start-btn {
+            padding: 20px 60px; font-size: 1.5rem; background: var(--accent);
+            border: none; border-radius: 50px; font-weight: 900; cursor: pointer; color: #000;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="start-screen" id="start-overlay">
+        <h1 style="margin-bottom: 30px; letter-spacing: 2px;">مساحتك | MSAHTUK</h1>
+        <button id="start-btn">بدء العرض التقديمي</button>
+    </div>
+
+    <div class="universe" id="star-field"></div>
+    <div class="story-indicators" id="indicators"></div>
+
+    <div class="stage">
+        <div class="phone-group" id="group-3d">
+            <div class="phone-side side-left screen" id="screen-left"></div>
+            <div class="phone-side side-right screen" id="screen-right"></div>
+            <div class="phone-main">
+                <div class="screen" id="screen-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-overlay" id="info-box">
+        <h2 id="title"></h2>
+        <p id="desc"></p>
+    </div>
+
+    <div class="bottom-bar"><div class="total-progress" id="main-progress"></div></div>
+
+    <audio id="bg-music" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"></audio>
+
+    <script>
+        const baseUrl = "https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/";
+        
+        const scenes = [
+            { t1: "مساحتك: رؤية جديدة", t2: "إعادة تعريف بيئة العمل في غزة عبر حلول تقنية ذكية تتخطى العقبات.", c: "logo.png", rot: {y:0, x:0}, dur: 5000 },
+            { t1: "واقع مليء بالتحديات", t2: "35% من المستقلين يعانون من انقطاع الكهرباء وضعف الإنترنت. نحن هنا لنحل هذه المعضلة.", c: "01splash.png", l: "04welcome1.png", r: "05welcome2.png", rot: {y:-15, x:5}, dur: 8000 },
+            { t1: "رحلة وصول سلسة", t2: "واجهات دخول عصرية وآمنة تضمن خصوصية بيانات المستخدمين.", c: "03login.png", l: "02signup.png", rot: {y:15, x:0}, dur: 7000 },
+            { t1: "استكشاف ذكي للمساحات", t2: "نظام فلترة متقدم يبحث لك عن توفر الكهرباء، سرعة الإنترنت، والموقع الأقرب.", c: "07home.png", l: "10search_results.png", r: "11nearly.png", rot: {y:0, x:10}, dur: 9000 },
+            { t1: "مساعدك الشخصي بالذكاء الاصطناعي", t2: "نظام AI Concierge يقترح عليك المساحة الأنسب لجدول عملك واحتياجاتك التقنية.", c: "09ai_concierge.png", rot: {y:-10, x:-5}, dur: 8000 },
+            { t1: "تفاصيل تمنحك الثقة", t2: "صور حقيقية، تقييمات دقيقة، وخرائط تفاعلية لكل زاوية عمل.", c: "12space_details_tap1.png", l: "13space_details_tap2.png", r: "14space_details_tap3.png", rot: {y:15, x:5}, dur: 9000 },
+            { t1: "حجز فوري وتتبع ذكي", t2: "تابع حالة طلبك لحظة بلحظة مع نظام تنبيهات تفاعلي.", c: "17request_booking.png", l: "18pending_booking_approval.png", r: "19booking_status.png", rot: {y:-15, x:0}, dur: 8000 },
+            { t1: "نظام دفع محلي متكامل", t2: "دعم كامل للمحافظ الإلكترونية لتسهيل عمليات الحجز والدفع الفوري.", c: "24payment.png", l: "23booking_status-go-payment.png", r: "27payment_done.png", rot: {y:0, x:-10}, dur: 7000 },
+            { t1: "إدارة متكاملة للملف الشخصي", t2: "تحكم كامل في إعداداتك، سجل حجوزاتك، وتفضيلات العمل الخاصة بك.", c: "28profile.png", l: "30settings.png", r: "31notification_settings.png", rot: {y:10, x:5}, dur: 7000 },
+            { t1: "بنية تقنية صلبة", t2: "مشروع مطور باستخدام Flutter و Firebase لضمان سرعة الأداء وتزامن البيانات.", c: "30settings.png", l: "logo.png", rot: {y:-15, x:5}, dur: 7000 },
+            { t1: "مساحتك: أكثر من مجرد تطبيق", t2: "نحن نبني مجتمعاً للمبدعين في غزة، لتمكينهم من الإنتاج مهما كانت الظروف.", c: "logo.png", rot: {y:0, x:0}, dur: 6000 }
+        ];
+
+        let index = 0;
+        const box = document.getElementById('info-box');
+        const mainScr = document.getElementById('screen-center');
+        const leftScr = document.getElementById('screen-left');
+        const rightScr = document.getElementById('screen-right');
+        const group = document.getElementById('group-3d');
+
+        // إنشاء مؤشرات التقدم العلوية
+        const indicators = document.getElementById('indicators');
+        scenes.forEach(() => {
+            const div = document.createElement('div');
+            div.className = 'indicator';
+            div.innerHTML = '<div class="indicator-fill"></div>';
+            indicators.appendChild(div);
+        });
+
+        function showScene() {
+            if(index >= scenes.length) index = 0;
+            const s = scenes[index];
+
+            // تحديث النصوص
+            box.classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('title').innerText = s.t1;
+                document.getElementById('desc').innerText = s.t2;
+                box.classList.add('active');
+            }, 500);
+
+            // تحديث الشاشات
+            mainScr.innerHTML = `<img src="${baseUrl}${s.c}" class="active">`;
+            leftScr.innerHTML = s.l ? `<img src="${baseUrl}${s.l}" class="active">` : '';
+            rightScr.innerHTML = s.r ? `<img src="${baseUrl}${s.r}" class="active">` : '';
+            
+            leftScr.style.opacity = s.l ? "0.5" : "0";
+            rightScr.style.opacity = s.r ? "0.5" : "0";
+
+            // حركة 3D
+            group.style.transform = `rotateY(${s.rot.y}deg) rotateX(${s.rot.x}deg)`;
+
+            // تحديث العدادات
+            const fills = document.querySelectorAll('.indicator-fill');
+            fills.forEach((f, i) => {
+                f.classList.remove('active');
+                if(i < index) f.classList.add('done');
+                if(i === index) {
+                    f.classList.remove('done');
+                    f.style.transitionDuration = '0s';
+                    f.style.width = '0%';
+                    setTimeout(() => {
+                        f.style.transitionDuration = s.dur + 'ms';
+                        f.classList.add('active');
+                    }, 50);
+                }
+                if(i > index) { f.classList.remove('done'); f.style.width = '0%'; }
+            });
+
+            document.getElementById('main-progress').style.width = `${((index+1)/scenes.length)*100}%`;
+
+            setTimeout(() => { index++; showScene(); }, s.dur);
+        }
+
+        // نجوم الخلفية
+        const field = document.getElementById('star-field');
+        for(let i=0; i<100; i++) {
+            let star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = star.style.height = Math.random()*3+'px';
+            star.style.top = Math.random()*100+'%'; star.style.left = Math.random()*100+'%';
+            star.style.setProperty('--d', (Math.random()*3+2)+'s');
+            field.appendChild(star);
+        }
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('start-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('start-overlay').remove(), 1000);
+            document.getElementById('bg-music').volume = 0.3;
+            document.getElementById('bg-music').play();
+            showScene();
+        });
+    </script>
+</body>
+</html>
