@@ -14,7 +14,7 @@
         .star { position: absolute; background: white; border-radius: 50%; opacity: 0.3; animation: twinkle var(--d) infinite; }
         @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.3); } }
 
-        .ui-header { position: fixed; top: 30px; left: 50px; right: 50px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .ui-header { position: fixed; top: 30px; left: 50px; right: 50px; display: flex; justify-content: center; align-items: center; z-index: 1000; }
         .countdown { font-size: 1.8rem; font-weight: 900; color: var(--warning); background: rgba(0,0,0,0.3); padding: 10px 25px; border-radius: 15px; border: 1px solid var(--accent); font-family: monospace; }
 
         .stage { display: grid; grid-template-columns: 1.2fr 2.5fr 1.2fr; height: 100vh; width: 100vw; align-items: center; padding: 0 50px; perspective: 2500px; }
@@ -28,8 +28,8 @@
 
         .side-phone { position: absolute; opacity: 0; transform: scale(0.85); }
         .side-phone.active { opacity: 0.5; }
-        .left-p { transform: translateX(-280px) translateZ(-200px) rotateY(30deg); }
-        .right-p { transform: translateX(280px) translateZ(-200px) rotateY(-30deg); }
+        .left-p { transform: translateX(-320px) translateZ(-200px) rotateY(30deg); }
+        .right-p { transform: translateX(320px) translateZ(-200px) rotateY(-30deg); }
 
         .text-panel { opacity: 0; transform: translateY(40px); transition: 1.2s; padding: 20px; }
         .text-panel.active { opacity: 1; transform: translateY(0); }
@@ -39,56 +39,39 @@
         .progress-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 6px; background: rgba(255,255,255,0.05); }
         .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--warning)); }
 
-        .language-selector { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; transition: 1s; opacity: 1; }
-        .language-selector.hidden { opacity: 0; pointer-events: none; }
-        .language-selector img { width: 200px; margin-bottom: 100px; }
-        .buttons-container { display: flex; gap: 40px; }
-        .lang-choice-btn { padding: 30px 70px; font-size: 1.8rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 30px rgba(56,189,248,0.4); transition: 0.3s; }
-        .lang-choice-btn:hover { background: #0ea5e9; transform: scale(1.05); }
-
-        .intro { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; opacity: 0; pointer-events: none; }
-        .intro.active { opacity: 1; pointer-events: auto; }
-        #start-btn { padding: 25px 80px; font-size: 1.8rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 30px rgba(56,189,248,0.4); transition: 0.3s; }
-        #start-btn:hover { background: #0ea5e9; transform: scale(1.05); }
-
-        .main-content { position: fixed; inset: 0; opacity: 0; pointer-events: none; transition: 1s; }
-        .main-content.active { opacity: 1; pointer-events: auto; }
+        .intro { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; text-align: center; }
+        .btn-group { display: flex; gap: 20px; margin-top: 50px; }
+        .start-btn { padding: 20px 40px; font-size: 1.4rem; background: var(--accent); border: none; border-radius: 60px; font-weight: 900; cursor: pointer; color: #000; box-shadow: 0 0 20px rgba(56,189,248,0.3); transition: 0.3s; }
+        .start-btn:hover { transform: scale(1.05); background: var(--warning); }
     </style>
 </head>
 <body>
 
+    <div class="intro" id="intro">
+        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png" style="width:200px;">
+        <div class="btn-group">
+            <button class="start-btn" onclick="startShow('ar')">عرض مساحتك</button>
+            <button class="start-btn" onclick="startShow('en')">Masahtuk Presentation</button>
+        </div>
+    </div>
+
     <div class="universe" id="universe"></div>
 
-    <div class="language-selector" id="languageSelector">
-        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png">
-        <div class="buttons-container">
-            <button class="lang-choice-btn" id="arBtn">عرض مساحتك</button>
-            <button class="lang-choice-btn" id="enBtn">Show Masahatak</button>
-        </div>
+    <div class="ui-header">
+        <div class="countdown" id="timer">00:00</div>
     </div>
 
-    <div class="intro" id="intro">
-        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png" style="width:200px; margin-bottom:50px;">
-        <button id="start-btn"></button>
+    <div class="stage">
+        <div class="text-panel" id="panel-left"></div>
+        <div class="phones-container">
+            <div class="phone side-phone left-p" id="phone-l"></div>
+            <div class="phone side-phone right-p" id="phone-r"></div>
+            <div class="phone" id="phone-c"></div>
+        </div>
+        <div class="text-panel" id="panel-right"></div>
     </div>
 
-    <div class="main-content" id="mainContent">
-        <div class="ui-header">
-            <div class="countdown" id="timer">02:00</div>
-        </div>
-
-        <div class="stage">
-            <div class="text-panel" id="panel-left"></div>
-            <div class="phones-container">
-                <div class="phone side-phone left-p" id="phone-l"></div>
-                <div class="phone side-phone right-p" id="phone-r"></div>
-                <div class="phone" id="phone-c"></div>
-            </div>
-            <div class="text-panel" id="panel-right"></div>
-        </div>
-
-        <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
-    </div>
+    <div class="progress-container"><div class="progress-bar" id="progress"></div></div>
 
     <audio id="music" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" type="audio/mpeg"></audio>
 
@@ -98,88 +81,76 @@
         const content = {
             ar: [
                 { t: "مساحتك: الرؤية", d: "مشروع ريادي انطلق من قلب المعاناة في غزة، ليوفر للمبدعين بيئة عمل ذكية تواكب تطلعاتهم العالمية.", c: "01splash.png", pos: "right", dur: 9000 },
-                { t: "واقع مليء بالتحديات", d: "يعاني أكثر من 35% من المستقلين من انقطاع الكهرباء وضعف الإنترنت، مما يهدد استقرار أعمالهم ومستقبلهم المهني.", c: "07home.png", l: "04welcome1.png", r: "05welcome2.png", pos: "left", dur: 10000 },
-                { t: "الحل الذكي", d: "مساحتك تقدم جسراً تقنياً يربط المستخدم بمساحات عمل مجهزة بأحدث الوسائل، لضمان استمرارية الإبداع دون انقطاع.", c: "03login.png", pos: "right", dur: 8000 },
+                { t: "واقع مليء بالتحديات", d: "يعاني أكثر من 35% من المستقلين من انقطاع الكهرباء وضعف الإنترنت، مما يهدد استقرار أعمالهم ومستقبلهم المهني.", c: "01splash.png", l: "04welcome1.png", r: "05welcome2.png", pos: "left", dur: 10000 },
+                { t: "الحل الذكي", d: "مساحتك تقدم جسراً تقنياً يربط المستخدم بمساحات عمل مجهزة بأحدث الوسائل، لضمان استمرارية الإبداع دون انقطاع.", c: "03login.png", pos: "right", dur: 9000 },
                 { t: "سهولة الوصول", d: "بواجهات عصرية وبسيطة، يمكنك إنشاء حسابك والبدء في استكشاف الفرص المتاحة حولك في ثوانٍ معدودة.", c: "02signup.png", l: "03login.png", pos: "left", dur: 9000 },
-                { t: "استكشاف المساحات", d: "نظام خرائط تفاعلي يتيح لك البحث عن أقرب مساحة عمل، مع عرض دقيق لمدى توفر الكهرباء وسرعة الإنترنت.", c: "25booking.png", l: "10search_results.png", r: "11nearly.png", pos: "right", dur: 10000 },
+                { t: "استكشاف المساحات", d: "نظام خرائط تفاعلي يتيح لك البحث عن أقرب مساحة عمل، مع عرض دقيق لمدى توفر الكهرباء وسرعة الإنترنت.", c: "07home.png", l: "10search_results.png", r: "11nearly.png", pos: "right", dur: 10000 },
                 { t: "مساعدك الرقمي الـ AI", d: "يقوم نظام الذكاء الاصطناعي بتحليل تفضيلاتك السابقة ليقترح عليك المكان الأنسب لمهامك الحالية.", c: "09ai_concierge.png", pos: "left", dur: 9000 },
                 { t: "تفاصيل تمنحك الثقة", d: "شاهد صوراً حقيقية لكل زاوية، واطلع على تقييمات الزملاء الذين سبقوك لتجربة المكان، لضمان اختيارك الأفضل.", c: "12space_details_tap1.png", l: "13space_details_tap2.png", r: "14space_details_tap3.png", pos: "right", dur: 10000 },
-                { t: "حجز فوري ومرن", d: "اخت�� الوقت الذي يناسبك، سواء لساعات محددة أو لأيام كاملة، مع تأكيد فوري يضمن لك مكانك المحجوز.", c: "17request_booking.png", l: "18pending_booking_approval.png", pos: "left", dur: 9000 },
+                { t: "حجز فوري ومرن", d: "اختر الوقت الذي يناسبك، سواء لساعات محددة أو لأيام كاملة، مع تأكيد فوري يضمن لك مكانك المحجوز.", c: "17request_booking.png", l: "18pending_booking_approval.png", pos: "left", dur: 10000 },
                 { t: "نظام دفع محلي", d: "دعم كامل للمحافظ الإلكترونية والحلول المالية المتاحة محلياً، لتسهيل عملية الدفع بأمان وسهولة تامة.", c: "24payment.png", l: "23booking_status-go-payment.png", r: "27payment_done.png", pos: "right", dur: 10000 },
-                { t: "إدارة الحساب الشاملة", d: "تحكم بملفك الشخصي، تتبع تاريخ حجوزاتك، وقم بضبط إشعاراتك لتبقى دائماً على اتصال ببيئة عملك.", c: "28profile.png", l: "30settings.png", r: "31notification_settings.png", pos: "left", dur: 9000 },
-                { t: "بنية تقنية قوية", d: "مشروع مطور بأحدث التقنيات البرمجية Flutter و Firebase لضمان سرعة فائقة وتزامن بيانات لحظي.", c: "30settings.png", pos: "right", dur: 8000 },
-                { t: "أكثر من مجرد تطبيق", d: "نحن نبني مجتمعاً، ونوفر فرصاً، ونعزز صمود المبدعين التقنيين في أصعب الظروف.", c: "01splash.png", pos: "left", dur: 8000 },
-                { t: "مساحتك.. مساحتك للإبداع", d: "انضم إلينا الآن وكن جزءاً من مستقبل العمل التقني في فلسطين.", c: "01splash.png", pos: "right", dur: 6000 },
-                { t: "شكراً لمتابعتكم", d: "فريق مساحتك يتمنى لكم رحلة عمل مثمرة.", c: "logo.png", pos: "left", dur: 5000 }
+                { t: "بنية تقنية قوية", d: "مشروع مطور بأحدث التقنيات البرمجية Flutter و Firebase لضمان سرعة فائقة وتزامن بيانات لحظي.", c: "30settings.png", l: "28profile.png", r: "31notification_settings.png", pos: "left", dur: 10000 },
+                { t: "مساحتك.. للإبداع", d: "انضم إلينا الآن وكن جزءاً من مستقبل العمل التقني في فلسطين. شكراً لمتابعتكم.", c: "logo.png", pos: "right", dur: 9000 }
             ],
             en: [
-                { t: "Masahatak: The Vision", d: "An entrepreneurial project launched from the heart of Gaza's challenges, offering creators a smart work environment.", c: "01splash.png", pos: "right", dur: 9000 },
-                { t: "A Reality Full of Challenges", d: "Over 35% of freelancers suffer from power outages and weak internet, threatening their work stability.", c: "07home.png", l: "04welcome1.png", r: "05welcome2.png", pos: "left", dur: 10000 },
-                { t: "The Smart Solution", d: "Masahatak provides a technical bridge connecting users to workspaces equipped with the latest facilities.", c: "03login.png", pos: "right", dur: 8000 },
-                { t: "Easy Access", d: "Create your account and start exploring opportunities around you in mere seconds.", c: "02signup.png", l: "03login.png", pos: "left", dur: 9000 },
-                { t: "Explore Spaces", d: "Interactive map system lets you search for the nearest workspace with electricity and internet info.", c: "25booking.png", l: "10search_results.png", r: "11nearly.png", pos: "right", dur: 10000 },
-                { t: "Your Digital AI Assistant", d: "AI system analyzes your preferences to suggest the most suitable place for your tasks.", c: "09ai_concierge.png", pos: "left", dur: 9000 },
-                { t: "Details That Build Trust", d: "View real photos and read reviews from colleagues to ensure the best choice.", c: "12space_details_tap1.png", l: "13space_details_tap2.png", r: "14space_details_tap3.png", pos: "right", dur: 10000 },
-                { t: "Fast and Flexible Booking", d: "Choose hours or full days, with instant confirmation securing your reservation.", c: "17request_booking.png", l: "18pending_booking_approval.png", pos: "left", dur: 9000 },
-                { t: "Local Payment System", d: "Full support for e-wallets and local financial solutions for secure payments.", c: "24payment.png", l: "23booking_status-go-payment.png", r: "27payment_done.png", pos: "right", dur: 10000 },
-                { t: "Comprehensive Account Management", d: "Control your profile, track bookings, and adjust notifications easily.", c: "28profile.png", l: "30settings.png", r: "31notification_settings.png", pos: "left", dur: 9000 },
-                { t: "Powerful Technical Architecture", d: "Built with Flutter and Firebase for lightning-fast performance and real-time sync.", c: "30settings.png", pos: "right", dur: 8000 },
-                { t: "More Than Just an App", d: "We're building a community, creating opportunities, and strengthening tech creators.", c: "01splash.png", pos: "left", dur: 8000 },
-                { t: "Masahatak.. Your Space for Creativity", d: "Join us and be part of the future of tech work in Palestine.", c: "01splash.png", pos: "right", dur: 6000 },
-                { t: "Thank You for Watching", d: "The Masahatak team wishes you a productive work journey.", c: "logo.png", pos: "left", dur: 5000 }
+                { t: "Masahtuk: The Vision", d: "A startup born from Gaza to provide a smart workspace environment that meets global aspirations.", c: "01splash.png", pos: "right", dur: 9000 },
+                { t: "The Reality", d: "Over 35% of freelancers suffer from power and internet outages, threatening their careers.", c: "01splash.png", l: "04welcome1.png", r: "05welcome2.png", pos: "left", dur: 10000 },
+                { t: "The Solution", d: "Masahtuk bridges the gap by connecting users to workspaces equipped with the latest tech.", c: "03login.png", pos: "right", dur: 9000 },
+                { t: "Easy Access", d: "With modern interfaces, create your account and explore opportunities in seconds.", c: "02signup.png", l: "03login.png", pos: "left", dur: 9000 },
+                { t: "Explore Spaces", d: "Interactive maps to find the nearest workspace with live updates on power and speed.", c: "07home.png", l: "10search_results.png", r: "11nearly.png", pos: "right", dur: 10000 },
+                { t: "AI Concierge", d: "Our AI analyzes your preferences to suggest the perfect spot for your daily tasks.", c: "09ai_concierge.png", pos: "left", dur: 9000 },
+                { t: "Details You Trust", d: "View real photos and peer reviews for every location to ensure the best choice.", c: "12space_details_tap1.png", l: "13space_details_tap2.png", r: "14space_details_tap3.png", pos: "right", dur: 10000 },
+                { t: "Instant Booking", d: "Choose your time, whether for hours or days, with instant booking confirmation.", c: "17request_booking.png", l: "18pending_booking_approval.png", pos: "left", dur: 10000 },
+                { t: "Local Payments", d: "Full support for local e-wallets and financial solutions for a safe experience.", c: "24payment.png", l: "23booking_status-go-payment.png", r: "27payment_done.png", pos: "right", dur: 10000 },
+                { t: "Strong Tech Stack", d: "Developed with Flutter and Firebase to ensure high performance and real-time sync.", c: "30settings.png", l: "28profile.png", r: "31notification_settings.png", pos: "left", dur: 10000 },
+                { t: "Masahtuk.. Empowering", d: "Join us now and be part of the future of tech work in Palestine. Thank you.", c: "logo.png", pos: "right", dur: 9000 }
             ]
         };
 
-        let lang = '';
+        let currentLang = 'ar';
         let idx = 0;
-        let currentTimer = null;
-        let currentTimeout = null;
+        let timerRemain = 0;
 
-        function createStars() {
-            for (let i = 0; i < 120; i++) {
-                let s = document.createElement('div');
-                s.className = 'star';
-                s.style.width = s.style.height = Math.random() * 3 + 'px';
-                s.style.top = Math.random() * 100 + '%';
-                s.style.left = Math.random() * 100 + '%';
-                s.style.setProperty('--d', (Math.random() * 4 + 2) + 's');
-                document.getElementById('universe').appendChild(s);
-            }
+        function startShow(lang) {
+            currentLang = lang;
+            document.getElementById('intro').style.opacity = '0';
+            setTimeout(() => document.getElementById('intro').style.display = 'none', 1000);
+            
+            const m = document.getElementById('music');
+            m.play().catch(e => console.log("Audio play failed"));
+
+            const scenes = content[currentLang];
+            const totalMs = scenes.reduce((a, b) => a + b.dur, 0);
+            timerRemain = totalMs / 1000;
+
+            // ضبط اتجاه الصفحة حسب اللغة
+            document.documentElement.lang = lang;
+            document.documentElement.dir = (lang === 'ar' ? 'rtl' : 'ltr');
+
+            startTimer(totalMs);
+            run();
         }
 
-        function getTotalTime() {
-            if (!lang || !content[lang]) return 0;
-            return content[lang].reduce((a, b) => a + b.dur, 0);
-        }
-
-        function startTimer() {
-            let totalTime = getTotalTime();
-            let remain = totalTime / 1000;
-
-            currentTimer = setInterval(() => {
-                if (remain <= 0) {
-                    clearInterval(currentTimer);
-                    finish();
-                    return;
-                }
-                remain--;
-                const m = Math.floor(remain / 60).toString().padStart(2, '0');
-                const s = (remain % 60).toString().padStart(2, '0');
-                document.getElementById('timer').innerText = `${m}:${s}`;
-                document.getElementById('progress').style.width = `${((totalTime / 1000 - remain) / (totalTime / 1000)) * 100}%`;
+        function startTimer(totalMs) {
+            const t = setInterval(() => {
+                if (timerRemain <= 0) { clearInterval(t); location.reload(); return; }
+                timerRemain--;
+                const min = Math.floor(timerRemain / 60).toString().padStart(2, '0');
+                const sec = Math.floor(timerRemain % 60).toString().padStart(2, '0');
+                document.getElementById('timer').innerText = `${min}:${sec}`;
+                document.getElementById('progress').style.width = `${((totalMs/1000 - timerRemain) / (totalMs/1000)) * 100}%`;
             }, 1000);
         }
 
         function run() {
-            if (!lang || !content[lang]) return;
-            const scenes = content[lang];
+            const scenes = content[currentLang];
             if (idx >= scenes.length) return;
             const s = scenes[idx];
 
             const pl = document.getElementById('panel-left');
             const pr = document.getElementById('panel-right');
-            pl.classList.remove('active');
-            pr.classList.remove('active');
+            pl.classList.remove('active'); pr.classList.remove('active');
+            
             const active = s.pos === 'left' ? pl : pr;
             active.innerHTML = `<h2>${s.t}</h2><p>${s.d}</p>`;
             setTimeout(() => active.classList.add('active'), 500);
@@ -187,60 +158,22 @@
             document.getElementById('phone-c').innerHTML = `<img src="${baseUrl}${s.c}" class="active">`;
             const phl = document.getElementById('phone-l');
             const phr = document.getElementById('phone-r');
-
+            
             phl.innerHTML = s.l ? `<img src="${baseUrl}${s.l}" class="active">` : '';
             phr.innerHTML = s.r ? `<img src="${baseUrl}${s.r}" class="active">` : '';
             phl.className = s.l ? "phone side-phone left-p active" : "phone side-phone left-p";
             phr.className = s.r ? "phone side-phone right-p active" : "phone side-phone right-p";
 
-            currentTimeout = setTimeout(() => {
-                idx++;
-                run();
-            }, s.dur);
+            setTimeout(() => { idx++; run(); }, s.dur);
         }
 
-        function finish() {
-            document.getElementById('music').pause();
-            setTimeout(() => {
-                document.getElementById('languageSelector').classList.remove('hidden');
-                document.getElementById('intro').classList.remove('active');
-                document.getElementById('mainContent').classList.remove('active');
-                lang = '';
-                idx = 0;
-            }, 1000);
+        for(let i=0; i<120; i++){
+            let s = document.createElement('div'); s.className='star';
+            s.style.width = s.style.height = Math.random()*3+'px';
+            s.style.top = Math.random()*100+'%'; s.style.left = Math.random()*100+'%';
+            s.style.setProperty('--d', (Math.random()*4+2)+'s');
+            document.getElementById('universe').appendChild(s);
         }
-
-        function startPresentation() {
-            document.getElementById('intro').classList.add('active');
-            document.getElementById('mainContent').classList.add('active');
-            const m = document.getElementById('music');
-            m.volume = 0.3;
-            m.play().catch(e => console.log("Audio failed"));
-            startTimer();
-            run();
-        }
-
-        document.getElementById('start-btn').addEventListener('click', startPresentation);
-
-        document.getElementById('arBtn').addEventListener('click', function() {
-            lang = 'ar';
-            document.documentElement.dir = 'rtl';
-            document.documentElement.lang = 'ar';
-            document.getElementById('languageSelector').classList.add('hidden');
-            document.getElementById('start-btn').textContent = 'ابدأ العرض';
-            setTimeout(() => document.getElementById('intro').classList.add('active'), 500);
-        });
-
-        document.getElementById('enBtn').addEventListener('click', function() {
-            lang = 'en';
-            document.documentElement.dir = 'ltr';
-            document.documentElement.lang = 'en';
-            document.getElementById('languageSelector').classList.add('hidden');
-            document.getElementById('start-btn').textContent = 'Start Presentation';
-            setTimeout(() => document.getElementById('intro').classList.add('active'), 500);
-        });
-
-        createStars();
     </script>
 </body>
 </html>
