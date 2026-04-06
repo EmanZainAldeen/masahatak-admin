@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مساحتك - العرض التقديمي المطور 10 شرائح</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- الأساسيات --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        body {
+            overflow: hidden; /* منع التمرير نهائياً */
+            background: #020c1b;
+            background-image: radial-gradient(circle at 50% 100%, #1a365d 0%, #0a192f 50%, #020c1b 100%);
+            width: 100vw;
+            height: 100vh;
+            color: white;
+            position: relative;
+        }
+
+        /* --- تأثير الإضاءة السفلية (المسرح المضيء) --- */
+        .stage-glow {
+            position: absolute;
+            bottom: -30vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100vw;
+            height: 60vh;
+            background: radial-gradient(ellipse at center, rgba(25, 118, 210, 0.3) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(50px);
+        }
+
+        /* --- الخلفية: النجوم والأشكال --- */
+        .stars {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px #fff; }
+        }
+
+        .floating-shapes {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 2;
+        }
+        .shape {
+            position: absolute; border-radius: 50%;
+            filter: blur(60px); opacity: 0.2;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .shape-1 { width: 300px; height: 300px; background: #0d47a1; top: 10%; right: 10%; }
+        .shape-2 { width: 400px; height: 400px; background: #ff9800; bottom: 10%; left: 10%; animation-delay: -5s; }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 50px) scale(1.1); }
+        }
+
+        /* --- الشعار والتحكم --- */
+        .logo-container {
+            position: absolute;
+            top: 30px; right: 40px;
+            z-index: 100;
+        }
+        .logo-container img { height: 60px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+
+        .nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffca28; width: 50px; height: 50px;
+            border-radius: 50%; font-size: 20px; cursor: pointer;
+            z-index: 100; display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-50%) scale(1.1); box-shadow: 0 0 15px rgba(255, 202, 40, 0.3); }
+        .prev-btn { right: 30px; }
+        .next-btn { left: 30px; }
+        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; transform: translateY(-50%); box-shadow: none; }
+
+        /* --- شريط التقدم --- */
+        .progress-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: linear-gradient(90deg, #ff9800, #ffca28); width: 0%; transition: 0.5s; z-index: 100; }
+
+        /* --- الحاوية الرئيسية --- */
+        #slider {
+            display: flex;
+            width: 1000vw; /* 10 Slides */
+            height: 100vh;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            z-index: 10;
+            position: relative;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;  /* توسيط عامودي */
+            justify-content: center; /* توسيط أفقي */
+            position: relative;
+        }
+
+        /* إطار ثابت للديسكتوب */
+        .fixed-canvas {
+            width: 1100px;  
+            height: 600px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+
+        /* --- العناوين المشتركة --- */
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px; 
+            width: 100%;
+        }
+        .section-title h1 {
+            font-size: 2.8rem;
+            color: #ffffff;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 15px;
+        }
+        .section-title p {
+            font-size: 1.3rem;
+            color: #bbdefb;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* --- تصميم البطاقات الزجاجية الشفافة (Glassmorphism) --- */
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e3f2fd;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: 0.3s;
+            position: relative;
+        }
+        .glass-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.1);
+        }
+        .glass-card h3 { font-size: 1.4rem; color: #ffca28; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .glass-card p { font-size: 1.1rem; line-height: 1.6; color: #fff; }
+        .card-number {
+            position: absolute; top: 10px; left: 15px;
+            font-size: 2.5rem; font-weight: 800; color: rgba(255, 202, 40, 0.1);
+        }
+
+        /* --- أنماط الشبكات --- */
+        .cards-grid {
+            display: flex;
+            gap: 30px;
+            width: 100%;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            width: 100%;
+        }
+
+        .roadmap-container {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-end; 
+            height: 250px;
+        }
+        .roadmap-step {
+            flex: 1;
+            padding: 25px;
+            border-radius: 12px;
+            color: #212121;
+            position: relative;
+            text-align: center;
+            display: flex; flex-direction: column; justify-content: center;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+        .roadmap-step:nth-child(1) { background: linear-gradient(135deg, #ffcc80, #ff9800); height: 160px; }
+        .roadmap-step:nth-child(2) { background: linear-gradient(135deg, #ffca28, #f57c00); height: 180px; }
+        .roadmap-step:nth-child(3) { background: linear-gradient(135deg, #ef5350, #c62828); height: 210px; color: white; }
+        .roadmap-step:nth-child(4) { background: linear-gradient(135deg, #ab47bc, #6a1b9a); height: 250px; color: white; }
+
+        /* --- إصلاح الطبقات التقنية (Isometric) --- */
+        .tech-layers-container {
+            display: flex; width: 100%; align-items: center; justify-content: space-between;
+        }
+        .isometric-graphics {
+            position: relative; width: 450px; height: 400px; /* زيادة الحاوية لتبين البطاقات */
+            transform-style: preserve-3d;
+            transform: rotateX(55deg) rotateZ(-40deg);
+        }
+        .layer-box {
+            position: absolute; width: 220px; height: 220px; /* تكبير بسيط للبطاقة */
+            border-radius: 15px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: bold; color: white;
+            box-shadow: -15px 15px 30px rgba(0,0,0,0.5), inset 0 2px 5px rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.3);
+            text-align: center; padding: 10px;
+        }
+        .layer-1 { transform: translateZ(0px); background: linear-gradient(135deg, #ffcc80, #ff9800); color: #000; }
+        .layer-2 { transform: translateZ(90px); background: linear-gradient(135deg, #ffca28, #f57c00); color: #000; }
+        .layer-3 { transform: translateZ(180px); background: linear-gradient(135deg, #ef5350, #c62828); }
+        .layer-4 { transform: translateZ(270px); background: linear-gradient(135deg, #ab47bc, #6a1b9a); }
+
+        .tech-text { flex: 1; display: flex; flex-direction: column; gap: 15px; padding-right: 40px; }
+        .tech-item { background: rgba(255,255,255,0.05); border-left: 3px solid #ffca28; padding: 15px; border-radius: 0 8px 8px 0; }
+
+        .hero-title { font-size: 3.5rem !important; color: #ffca28 !important; text-shadow: 0 8px 25px rgba(0,0,0,0.7); line-height: 1.4; }
+
+        .anim-up { opacity: 0; transform: translateY(40px); transition: 0.8s ease-out; }
+        .anim-scale { opacity: 0; transform: scale(0.8); transition: 0.6s ease-out; }
+        .slide.active .anim-up { opacity: 1; transform: translateY(0); }
+        .slide.active .anim-scale { opacity: 1; transform: scale(1); }
+    </style>
+</head>
+<body>
+
+    <div class="stage-glow"></div>
+    <div class="stars" id="stars-container"></div>
+    <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+    </div>
+
+    <div class="logo-container">
+	<div class="shape shape-1"></div>
+     	<div class="shape shape-1"></div>
+        <img src="https://raw.githubusercontent.com/OLaabudahi/my-images/refs/heads/main/logo.png" alt="مساحتك">
+    </div>
+
+    <button id="prevBtn" class="nav-btn prev-btn" onclick="prevSlide()">❯</button>
+    <button id="nextBtn" class="nav-btn next-btn" onclick="nextSlide()">❮</button>
+
+    <div id="slider">
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-scale">
+                    <h1 class="hero-title">مساحتك: منصة ذكية لإدارة<br>وحجز مساحات العمل</h1>
+                    <p style="font-size: 1.7rem; color: #e3f2fd; margin-top:20px;">مشروع "مساحتك": إعادة تعريف الإنتاجية في غزة عبر التكنولوجيا</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>واقع التحول الرقمي الصعب</h1>
+                    <p>مع نمو العمل عن بعد بنسبة 35%، يواجه الشباب تحديات بنيوية تعيق مساراتهم.</p>
+                </div>
+                <div class="cards-grid">
+                    <div class="glass-card anim-up"><div class="card-number">01</div><h3>انقطاع التيار الكهربائي</h3><p>استمرار انقطاع التيار الكهربائي لساعات طويلة، مما يمنع تشغيل الأجهزة لإتمام المهام.</p></div>
+                    <div class="glass-card anim-up"><div class="card-number">02</div><h3>ضعف شبكات الإنترنت</h3><p>ضعف شديد في الإنترنت في مناطق النزوح، مما يعيق تماماً الاتصال بالمنصات الرقمية.</p></div>
+                    <div class="glass-card anim-up"><div class="card-number">03</div><h3>فقدان الخصوصية والهدوء</h3><p>تعذر الحصول على الخصوصية للتركيز في بيئة النزوح المكتظة، مما يؤثر على الأداء.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>نظرة على عوائق الإنتاجية</h1>
+                </div>
+                <div class="cards-grid">
+                    <div class="glass-card anim-up">
+                        <h3>تحديات بيئة العمل</h3>
+                        <p>تأثير مباشر على الأداء المهني نتيجة الظروف المحيطة غير المستقرة وصعوبة الوصول للمرافق.</p>
+                    </div>
+                    <div class="glass-card anim-up">
+                        <h3>تراجع الإنتاجية</h3>
+                        <p>تتسبب العوائق في خسارة 40% من الطاقة والقدرة على الإنجاز اليومي تحت الضغط.</p>
+                    </div>
+                    <div class="glass-card anim-up">
+                        <h3>تشتت الجهود</h3>
+                        <p>ضياع الوقت المستمر في التنقل والبحث عن أبسط مقومات العمل المهني المستقر.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>مساحتك: حل حجز المساحات</h1>
+                    <p>يقدم التطبيق حلاً رقمياً متكاملاً لجميع خيارات البحث والحجز والدفع في واجهة واحدة.</p>
+                </div>
+                <div class="cards-grid">
+                    <div class="glass-card anim-up"><h3>البحث الذكي</h3><p>الوصول السريع للمساحات بناءً على الموقع، السعر، والخدمات المتاحة لتسهيل البحث.</p></div>
+                    <div class="glass-card anim-up"><h3>الحجز المرن</h3><p>خيارات حجز يومية أو أسبوعية تتناسب تماماً مع ميزانية الطلاب والمستقلين.</p></div>
+                    <div class="glass-card anim-up"><h3>الدفع الآمن</h3><p>قنوات دفع محلية موثوقة تضمن إتمام العمليات المالية بسهولة وأمان.</p></div>
+                    <div class="glass-card anim-up"><h3>التأكيد الفوري</h3><p>نظام آلي يضمن حجز المكان لحظياً دون الحاجة لاتصالات أو انتظار طويل.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>رحلة البحث إلى الإنجاز</h1>
+                </div>
+                <div class="features-grid">
+                    <div class="glass-card anim-up"><h3>استكشاف</h3><p>البحث باستخدام فلاتر ذكية تشمل خيارات مثل الكهرباء المستمرة والإنترنت المستقر.</p></div>
+                    <div class="glass-card anim-up"><h3>اختيار</h3><p>استعراض صور المساحات، الاطلاع على تقييمات المستخدمين، والتحقق من جودة الخدمات.</p></div>
+                    <div class="glass-card anim-up"><h3>حجز ودفع</h3><p>إتمام عملية حجز المساحة المطلوبة إلكترونياً من خلال بوابة دفع موثوقة وسريعة.</p></div>
+                    <div class="glass-card anim-up"><h3>استلام</h3><p>تأكيد فوري للحجز على التطبيق، مع توفير كافة تفاصيل التوجه للمكان والبدء بالعمل.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>هيكلية تقنية متينة ومرنة</h1>
+                </div>
+                <div class="tech-layers-container">
+                    <div class="tech-text">
+                        <div class="tech-item anim-up"><h4>تطوير واجهات المستخدم</h4><p>تطوير واجهات موحدة وسلسة عبر كافة الهواتف باستخدام Flutter.</p></div>
+                        <div class="tech-item anim-up"><h4>إدارة البيانات والهوية</h4><p>استخدام Firebase لقواعد البيانات، الهوية، والإشعارات الفورية.</p></div>
+                        <div class="tech-item anim-up"><h4>بيئة تشغيل الخلفية</h4><p>استخدام Node.js لضمان سرعة فائقة في معالجة طلبات الحجز.</p></div>
+                        <div class="tech-item anim-up"><h4>تنظيم قواعد البيانات</h4><p>جداول مفصلة للمستخدمين، المساحات، الحجوزات، والتقييمات.</p></div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>سوق واعد وفرصة للنمو</h1>
+                </div>
+                <div class="cards-grid">
+                    <div class="glass-card anim-up"><h3>نمو عالمي</h3><p>قطاع المساحات المشتركة ينمو بقوة وقيمته تتجاوز 13 مليار دولار عالمياً.</p></div>
+                    <div class="glass-card anim-up"><h3>الجمهور المستهدف</h3><p>نركز على الطلاب، المستقلين، والشركات الناشئة في غزة لتقديم الدفعات اللازمة.</p></div>
+                    <div class="glass-card anim-up"><h3>الفجوة المحلية</h3><p>الحلول الحالية يدوية أو غير منظمة، مما يمنحنا ميزة تنافسية كأول منصة متخصصة.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>خارطة الطريق: تجاوز الحجز التقليدي</h1>
+                </div>
+                <div class="roadmap-container">
+                    <div class="roadmap-step anim-up"><h4>المرحلة 1</h4><p>التوسع الجغرافي وتغطية مساحات أوسع.</p></div>
+                    <div class="roadmap-step anim-up"><h4>المرحلة 2</h4><p>نسخة الويب لدعم الوصول عبر الكمبيوتر.</p></div>
+                    <div class="roadmap-step anim-up"><h4>المرحلة 3</h4><p>الذكاء الاصطناعي لتوصيات مخصصة.</p></div>
+                    <div class="roadmap-step anim-up"><h4>المرحلة 4</h4><p>تطوير الشراكات الاستراتيجية لتعزيز المنصة.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1>الخلاصة: مساحتك جسر نحو الاستدامة المهنية</h1>
+                </div>
+                <div class="cards-grid">
+                    <div class="glass-card anim-up"><h3>حل عملي</h3><p>معالجة تحديات واقعية ودعم آلاف الشباب بحلول مبتكرة تخدم البيئة المحلية.</p></div>
+                    <div class="glass-card anim-up"><h3>تكنولوجيا هادفة</h3><p>توظيف الأدوات الهندسية لدعم المجتمع ورفع مستويات الإنتاجية بكفاءة.</p></div>
+                    <div class="glass-card anim-up"><h3>إمكانية التوسع</h3><p>نموذج مشروع جاهز وقابل للنمو السريع في السوق المحلي والأسواق المجاورة.</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="fixed-canvas">
+                <div class="section-title anim-up">
+                    <h1 class="hero-title">شكراً لكم</h1>
+                    <p style="font-size: 1.5rem; color: #bbdefb; margin-top:20px;">نتطلع إلى الخطوات التالية والشراكات المثمرة</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="progress-bar" id="progress-bar"></div>
+
+    <script>
+        const starsContainer = document.getElementById('stars-container');
+        for (let i = 0; i < 80; i++) {
+            let star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = Math.random() * 3 + 'px';
+            star.style.height = star.style.width;
+            star.style.top = Math.random() * 100 + 'vh';
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            starsContainer.appendChild(star);
+        }
+
+        const slider = document.getElementById('slider');
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress-bar');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        let currentSlide = 0;
+
+        function updateSlide() {
+            slides.forEach(s => s.classList.remove('active'));
+            slider.style.transform = `translateX(${currentSlide * 100}vw)`;
+            slides[currentSlide].classList.add('active');
+            progressBar.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === slides.length - 1;
+        }
+
+        function nextSlide() { if (currentSlide < slides.length - 1) { currentSlide++; updateSlide(); } }
+        function prevSlide() { if (currentSlide > 0) { currentSlide--; updateSlide(); } }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') nextSlide();
+            if (e.key === 'ArrowRight') prevSlide();
+        });
+
+        window.onload = updateSlide;
+    </script>
+</body>
+</html>
