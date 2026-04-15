@@ -1,5 +1,6 @@
 const aiService = require('../services/aiService');
 
+<<<<<<< HEAD
 // 1. إرسال رسالة واستقبال رد ذكي
 exports.chatWithConcierge = async (req, res) => {
   try {
@@ -15,6 +16,23 @@ exports.chatWithConcierge = async (req, res) => {
       message: message.trim(),
       history,      // مصفوفة الهيستوري القادمة من الموبايل
       lastSpaces    // آخر 10 مساحات كانت معروضة للمقارنة
+=======
+exports.chatWithConcierge = async (req, res) => {
+  try {
+    const { message, lang = 'en' } = req.body || {};
+
+    if (!message || typeof message !== 'string') {
+      return res.status(400).json({ error: 'message is required' });
+    }
+
+    if (!['ar', 'en'].includes(lang)) {
+      return res.status(400).json({ error: 'lang must be ar or en' });
+    }
+
+    const response = await aiService.generateConciergeReply({
+      message: message.trim(),
+      lang,
+>>>>>>> 177c929 (Add Flutter AI chat integration guide as flutter_ai.md)
     });
 
     return res.json(response);
@@ -23,6 +41,7 @@ exports.chatWithConcierge = async (req, res) => {
     return res.status(500).json({ error: 'Failed to generate AI response' });
   }
 };
+<<<<<<< HEAD
 
 // 2. إنهاء الجلسة وتحديث ملخص تفضيلات المستخدم
 exports.finalizeChatSession = async (req, res) => {
@@ -41,3 +60,5 @@ exports.finalizeChatSession = async (req, res) => {
     return res.status(500).json({ error: 'Failed to update user profile' });
   }
 };
+=======
+>>>>>>> 177c929 (Add Flutter AI chat integration guide as flutter_ai.md)
