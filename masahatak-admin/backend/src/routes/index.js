@@ -13,6 +13,7 @@ const notificationsRoutes = require('./notifications');
 const ownersRoutes = require('./owners');
 const superadminRoutes = require('./superadmin');
 const requestSpacesRoutes = require('./requestSpaces');
+const aiRoutes = require('./ai');
 
 router.use('/auth', authRoutes);
 router.use('/users', usersRoutes);
@@ -26,5 +27,6 @@ router.use('/notifications', notificationsRoutes);
 router.use('/owners', ownersRoutes);
 router.use('/superadmin', superadminRoutes);
 router.use('/request-spaces', requestSpacesRoutes);
+router.use('/ai', aiRoutes);
 
 module.exports = router;
