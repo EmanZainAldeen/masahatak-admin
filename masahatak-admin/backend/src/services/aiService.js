@@ -1,6 +1,5 @@
 const { db, COLLECTIONS } = require('../config/firebase');
-
-const MODEL_NAME = 'gemini-1.5-pro';
+const MODEL_NAME = 'gemini-3-flash-preview';
 
 function getLanguageInstruction(lang) {
   return lang === 'ar'
