@@ -66,35 +66,41 @@ function addActionTagIfMissing(text, spaces) {
   return `${text} [ACTION:${matchedSpace.id}]`;
 }
 
+
 async function generateConciergeReply({ message, lang }) {
   if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not configured in .env file.');
+    throw new Error('GEMINI_API_KEY is not configured.');
   }
 
+  // استيراد المكتبة
+  const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+  // جلب البيانات من فايربيس
   const spaces = await fetchSpacesContext();
 
   if (!spaces.length) {
     return {
-      text: lang === 'ar' ? 'عذرًا، لا توجد مساحات متاحة حاليًا.' : 'Sorry, no spaces available.',
+      text: lang === 'ar' 
+        ? 'عذرًا، لا توجد مساحات متاحة حاليًا.' 
+        : 'Sorry, there are no available spaces right now.',
     };
   }
 
-  try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-    const prompt = buildPrompt({ message, lang, spaces });
-    
-    const result = await model.generateContent(prompt);
-    // تأكدي من جلب النص بطريقة آمنة
-    const response = await result.response;
-    const rawText = response.text(); 
+  // تعريف المتغير بشكل صحيح
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 
-    return {
-      text: addActionTagIfMissing(rawText.trim(), spaces),
-    };
-  } catch (error) {
-    console.error("Gemini Error:", error);
-    throw error;
-  }
+  const prompt = buildPrompt({ message, lang, spaces });
+
+  // تنفيذ الطلب
+  const result = await model.generateContent(prompt);
+  const response = await result.response;
+  let text = response.text();
+
+  // إضافة التاجات إذا لزم الأمر
+  text = addActionTagIfMissing(text, spaces);
+
+  return { text };
 }
 
 module.exports = { generateConciergeReply };
