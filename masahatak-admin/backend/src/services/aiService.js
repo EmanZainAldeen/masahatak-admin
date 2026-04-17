@@ -1,10 +1,10 @@
 const { db, COLLECTIONS } = require('../config/firebase');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
 const MODEL_NAME = 'gemini-3-flash-preview';
 
 function getLanguageInstruction(lang) {
-  return lang === 'ar'
-    ? 'Respond in Arabic only.'
-    : 'Respond in English only.';
+  return lang === 'ar' ? 'Respond in Arabic only.' : 'Respond in English only.';
 }
 
 function normalizeSpaceDoc(doc) {
@@ -43,21 +43,12 @@ function buildPrompt({ message, lang, spaces }) {
   const systemInstruction = [
     'You are the official assistant of Masahtak app.',
     'Only answer based on provided spaces data.',
-    'Do not invent information.',
-    'If no match, apologize politely.',
     'Do not answer outside workspace booking domain.',
     'When suggesting a space, append [ACTION:SPACE_ID] using the exact suggested space id.',
-    'Support Arabic and English responses depending on user language.',
     getLanguageInstruction(lang),
   ].join(' ');
 
-  return [
-    systemInstruction,
-    '',
-    formatSpacesContext(spaces),
-    '',
-    `User question: ${message}`,
-  ].join('\n');
+  return `${systemInstruction}\n\n${formatSpacesContext(spaces)}\n\nUser question: ${message}`;
 }
 
 function addActionTagIfMissing(text, spaces) {
@@ -77,34 +68,33 @@ function addActionTagIfMissing(text, spaces) {
 
 async function generateConciergeReply({ message, lang }) {
   if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not configured.');
+    throw new Error('GEMINI_API_KEY is not configured in .env file.');
   }
-
-  const { GoogleGenerativeAI } = require('@google/generative-ai');
 
   const spaces = await fetchSpacesContext();
 
   if (!spaces.length) {
     return {
-      text:
-        lang === 'ar'
-          ? 'عذرًا، لا توجد مساحات متاحة حاليًا.'
-          : 'Sorry, there are no available spaces right now.',
+      text: lang === 'ar' ? 'عذرًا، لا توجد مساحات متاحة حاليًا.' : 'Sorry, no spaces available.',
     };
   }
 
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+  try {
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+    const prompt = buildPrompt({ message, lang, spaces });
+    
+    const result = await model.generateContent(prompt);
+    // تأكدي من جلب النص بطريقة آمنة
+    const response = await result.response;
+    const rawText = response.text(); 
 
-  const prompt = buildPrompt({ message, lang, spaces });
-  const result = await model.generateContent(prompt);
-  const rawText = result?.response?.text?.() || '';
-
-  return {
-    text: addActionTagIfMissing(rawText.trim(), spaces),
-  };
+    return {
+      text: addActionTagIfMissing(rawText.trim(), spaces),
+    };
+  } catch (error) {
+    console.error("Gemini Error:", error);
+    throw error;
+  }
 }
 
-module.exports = {
-  generateConciergeReply,
-};
+module.exports = { generateConciergeReply };
