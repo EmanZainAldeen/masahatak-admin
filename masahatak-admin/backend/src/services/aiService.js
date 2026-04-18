@@ -45,7 +45,8 @@ function buildPrompt({ message, lang, spaces }) {
     'Only answer based on provided spaces data.',
     'Do not answer outside workspace booking domain.',
     'When suggesting a space, append [ACTION:SPACE_ID] using the exact suggested space id.',
-    getLanguageInstruction(lang),
+    "Always respond in the same language as the user's message. If the user speaks Arabic, respond in Arabic. If they speak English, respond in English.",
+   // getLanguageInstruction(lang),
   ].join(' ');
 
   return `${systemInstruction}\n\n${formatSpacesContext(spaces)}\n\nUser question: ${message}`;
