@@ -1,7 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { db, COLLECTIONS } = require('../config/firebase');
 
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-3-flash-preview';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
