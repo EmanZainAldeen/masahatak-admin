@@ -1,4 +1,5 @@
 const { db } = require('../config/firebase');
+const { sendPushToUser } = require('../fcmService');
 
 // Get notifications for admin
 exports.getNotifications = async (req, res) => {
@@ -65,6 +66,13 @@ exports.sendNotification = async (req, res) => {
   try {
     const { userId, title, message, type } = req.body;
 
+    if (!userId || !title || !message) {
+      return res.status(400).json({
+        success: false,
+        error: 'userId, title, and message are required',
+      });
+    }
+
     const notificationRef = await db.collection('notifications').add({
       userId,
       recipientType: 'user',
@@ -83,6 +91,39 @@ exports.sendNotification = async (req, res) => {
   } catch (error) {
     console.error('Send notification error:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Send push notification to a specific user (admin action)
+exports.sendPushNotification = async (req, res) => {
+  try {
+    const { uid, title, body, data } = req.body || {};
+
+    if (!uid || !title || !body) {
+      return res.status(400).json({
+        success: false,
+        error: 'uid, title, and body are required',
+      });
+    }
+
+    const result = await sendPushToUser({
+      uid,
+      title,
+      body,
+      data: data || {},
+    });
+
+    return res.status(200).json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.error('Send push notification error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to send push notification',
+      message: error.message,
+    });
   }
 };
 
