@@ -1,6 +1,14 @@
 const jwt = require('jsonwebtoken');
 const { db } = require('../config/firebase');
 
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || !String(secret).trim()) {
+    throw new Error('JWT_SECRET is missing');
+  }
+  return secret;
+}
+
 const authMiddleware = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
@@ -9,7 +17,7 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ error: 'No authentication token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
 
     // Verify user is admin from users collection
     const userDoc = await db.collection('users').doc(decoded.userId).get();
@@ -27,6 +35,12 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (error) {
+    if (error.message === 'JWT_SECRET is missing') {
+      return res.status(500).json({
+        error: 'Server configuration error: JWT secret is not configured',
+      });
+    }
+
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
