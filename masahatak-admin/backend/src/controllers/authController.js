@@ -4,6 +4,16 @@ const { db, admin } = require('../config/firebase');
 // Firebase Web API key (for REST auth)
 const FIREBASE_API_KEY = 'AIzaSyAAtRYqL1K7U2rOgZIl5Jkm6D1TCrjZIcA';
 
+
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || !String(secret).trim()) {
+    throw new Error('JWT_SECRET is missing');
+  }
+  return secret;
+}
+
+
 // Helper: sign in via Firebase Auth REST API
 async function firebaseSignIn(email, password) {
   const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
@@ -44,7 +54,7 @@ exports.login = async (req, res) => {
     // 3. أنشئ JWT token
     const token = jwt.sign(
       { userId: uid, email },
-      process.env.JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '24h' }
     );
 
@@ -60,6 +70,13 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+
+    if (error.message === 'JWT_SECRET is missing') {
+      return res.status(500).json({
+        error: 'Server configuration error: JWT secret is not configured',
+      });
+    }
+
     res.status(500).json({ error: 'Server error during login' });
   }
 };

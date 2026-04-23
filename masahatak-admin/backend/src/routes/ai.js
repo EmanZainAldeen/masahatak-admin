@@ -3,15 +3,10 @@ const aiController = require('../controllers/aiController');
 
 const router = express.Router();
 
-<<<<<<< HEAD
-// مسار الدردشة المستمرة
+// المسار الرئيسي للدردشة الذكية
 router.post('/chat', aiController.chatWithConcierge);
 
-// مسار إنهاء الجلسة (يُستدعى عند الخروج من الشات أو الحجز)
+// أبقيناه من النسخة الأكثر تطورًا لتحديث تفضيلات المستخدم بعد انتهاء المحادثة
 router.post('/finalize', aiController.finalizeChatSession);
 
-=======
-router.post('/chat', aiController.chatWithConcierge);
-
->>>>>>> 177c929 (Add Flutter AI chat integration guide as flutter_ai.md)
 module.exports = router;
